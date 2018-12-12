@@ -21,8 +21,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.kiralycraft.tapidiy.Connection;
-
-import javafx.util.Pair;
+import com.kiralycraft.tapidiy.Pair;
 
 public class RunThread extends Thread implements Runnable 
 {
