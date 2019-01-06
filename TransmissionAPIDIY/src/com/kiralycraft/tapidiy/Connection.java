@@ -35,10 +35,11 @@ public class Connection
 		private long lastActivitySeconds,timeAddedSeconds;
 		private long uploadedEver;
 		private long size;
+		private long haveValid;
 		private String name;
 		boolean shouldBeProcessed;
 		
-		public TorrentInfo(int id, float uploadRatio, long lastActivitySeconds, long timeAddedSeconds,long uploadedEver, long size,String name) 
+		public TorrentInfo(int id, float uploadRatio, long lastActivitySeconds, long timeAddedSeconds,long uploadedEver, long size,long haveValid, String name) 
 		{
 			this.id = id;
 			this.uploadRatio = uploadRatio;
@@ -46,6 +47,7 @@ public class Connection
 			this.timeAddedSeconds = timeAddedSeconds;
 			this.uploadedEver = uploadedEver;
 			this.size = size;
+			this.haveValid = haveValid;
 			this.name = name;
 			this.shouldBeProcessed = false;
 		}
@@ -71,6 +73,9 @@ public class Connection
 		public long getSize() {
 			return size;
 		}
+		public long haveValid() {
+            return haveValid;
+        }
 	}
 	
 	public Connection(String username,String password,String url)
@@ -125,6 +130,33 @@ public class Connection
 			return 0;
 		}
 	}
+    public long getDownloadingTorrentsSpaceNeeded() 
+    {
+        long spaceNeeded=0;
+        if (updateTorrentInfo())
+        {
+            JsonArray allTorrents = torrentInfo.getAsJsonObject("arguments").getAsJsonArray("torrents");
+ 
+            for (JsonElement obj:allTorrents)
+            {
+                float percentDone = obj.getAsJsonObject().getAsJsonPrimitive("percentDone").getAsFloat();
+                if (percentDone!=1f)
+                {
+                    long completeSize = obj.getAsJsonObject().getAsJsonPrimitive("sizeWhenDone").getAsLong();
+                    long haveValid = obj.getAsJsonObject().getAsJsonPrimitive("haveValid").getAsLong();
+                    long tmp = 0;
+                    tmp = completeSize - haveValid;
+                    spaceNeeded += tmp;
+                }
+            }
+            return spaceNeeded;
+        }
+        else
+        {
+            System.out.println("Unable to get downloading torrents info to calculate required space");
+            return -1;
+        }
+    }
 	public boolean cleanup(long spaceNeeded)
 	{
 		if (!updateTorrentInfo())
@@ -146,7 +178,7 @@ public class Connection
 		            float ratio = obj.getAsJsonObject().getAsJsonPrimitive("uploadRatio").getAsFloat();
 		            long uploadEver = obj.getAsJsonObject().getAsJsonPrimitive("uploadedEver").getAsLong();
 		            long size = obj.getAsJsonObject().getAsJsonPrimitive("sizeWhenDone").getAsLong();
-		            
+		            long haveValid = obj.getAsJsonObject().getAsJsonPrimitive("haveValid").getAsLong();
 		            JsonObject activityInfo = getTorrentInfo(id);
 		            JsonObject torrentList = activityInfo.getAsJsonArray("torrents").get(0).getAsJsonObject();
 		            
@@ -156,7 +188,7 @@ public class Connection
 		            long timeAddedSeconds = System.currentTimeMillis()/1000-torrentList.getAsJsonPrimitive("startDate").getAsLong();
 		            long lastActivitySeconds = System.currentTimeMillis()/1000 - torrentList.getAsJsonPrimitive("activityDate").getAsLong();
 		            
-		            TorrentInfo ti = new TorrentInfo(id,ratio,lastActivitySeconds,timeAddedSeconds,uploadEver,size,name);
+		            TorrentInfo ti = new TorrentInfo(id,ratio,lastActivitySeconds,timeAddedSeconds,uploadEver,size,haveValid,name);
 		            
 		            tilist.add(ti); //doar daca indeplineste conditiile pentru a fi sters
 		            if ((ti.getUploadRatio()>1.0f || ti.getTimeAddedSeconds()>172800)) //daca are 48 de ore si nu o mai facut upload de o zi
@@ -418,7 +450,7 @@ public class Connection
 	{
 		try 
 		{
-			byte[] postData       = "{\"method\":\"torrent-get\",\"arguments\":{\"fields\":[\"id\",\"error\",\"errorString\",\"eta\",\"isFinished\",\"isStalled\",\"leftUntilDone\",\"metadataPercentComplete\",\"peersConnected\",\"peersGettingFromUs\",\"peersSendingToUs\",\"percentDone\",\"queuePosition\",\"rateDownload\",\"rateUpload\",\"recheckProgress\",\"seedRatioMode\",\"seedRatioLimit\",\"sizeWhenDone\",\"status\",\"trackers\",\"downloadDir\",\"uploadedEver\",\"uploadRatio\",\"webseedsSendingToUs\"]}}".getBytes( StandardCharsets.UTF_8 );
+			byte[] postData       = "{\"method\":\"torrent-get\",\"arguments\":{\"fields\":[\"id\",\"error\",\"errorString\",\"eta\",\"isFinished\",\"isStalled\",\"leftUntilDone\",\"metadataPercentComplete\",\"peersConnected\",\"peersGettingFromUs\",\"peersSendingToUs\",\"percentDone\",\"queuePosition\",\"rateDownload\",\"rateUpload\",\"recheckProgress\",\"seedRatioMode\",\"seedRatioLimit\",\"sizeWhenDone\",\"haveValid\",\"status\",\"trackers\",\"downloadDir\",\"uploadedEver\",\"uploadRatio\",\"webseedsSendingToUs\"]}}".getBytes( StandardCharsets.UTF_8 );
 			int    postDataLength = postData.length;
 			String request = url;
 			URL url = new URL(request);
