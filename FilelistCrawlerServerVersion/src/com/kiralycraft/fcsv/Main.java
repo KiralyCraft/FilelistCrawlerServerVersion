@@ -98,7 +98,6 @@ public class Main
 		String seedLeechRatio = saveman.getKey("seedLeechRatio");
 		String downloadFolder = saveman.getKey("downloadFolder");
 		
-		System.out.println("THIS ONLY WORKS IF PRESENT ON THE SAME PHYSICAL MACHINE AS TRANSMISSION!");
 		System.out.println("You can type \"help\" to see various commands.");
 		Connection connection = new Connection(transmissionuser,transmissionpassword,transmissionip);
 		RunThread runThread = new RunThread(Boolean.parseBoolean(usernamepassword),filelistusername,filelistpassword,cfduid,phpsessionid,pass,uid,fl,downloadFolder,freelechOnly,seedLeechRatio,saveman,connection);
