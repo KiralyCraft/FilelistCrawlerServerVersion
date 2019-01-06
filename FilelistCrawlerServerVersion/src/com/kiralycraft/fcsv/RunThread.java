@@ -510,7 +510,7 @@ public class RunThread extends Thread implements Runnable
 	          }
 	          else if (torrentSizeData[1].equalsIgnoreCase("MB"))
 	          {
-	        	  downloadSize = Double.parseDouble(torrentSizeData[0])/1024;
+	        	  downloadSize = Double.parseDouble(torrentSizeData[0])/1000;
 	          }
 	          Element seedersDiv = torrentData.get(8);
 	          seeders = Integer.parseInt(seedersDiv.text().replaceAll("\\D", ""));
@@ -543,7 +543,7 @@ public class RunThread extends Thread implements Runnable
 		}
 		else
 		{
-			log("Got response: "+freeSpaceOnTransmission+" bytes = "+freeSpaceOnTransmission/1024/1024+" MB");
+			log("Got response: "+freeSpaceOnTransmission+" bytes = "+freeSpaceOnTransmission/1000/1000+" MB");
 			for (int i=0;i<torrentDataList.size();i++)
 			{
 				TorrentData td = torrentDataList.get(i);
@@ -556,13 +556,13 @@ public class RunThread extends Thread implements Runnable
 					File expectedTorrentPath = new File(downloadFolder.getAbsolutePath()+File.separator+getTorrentFilename(td.torrentName));
 					if (!expectedTorrentPath.exists())
 					{
-						if (freeSpaceOnTransmission/1024/1024/1024>=(totalSize+td.downloadSize))
+						if (freeSpaceOnTransmission/1000/1000/1000>=(totalSize+td.downloadSize))
 						{
 							torrentsPendingDownload.add(expectedTorrentPath.getAbsolutePath());
 							totalSize+=td.downloadSize;
 							log("Okay! Downloading torrent: "+td.torrentName);
 							log("Total size: "+td.downloadSize+" GB, seeders: "+td.seeders+", leechers: "+td.leechers+", ratio: "+td.leechseedratio);
-							log("Free space remaining after the download: "+(downloadFolder.getFreeSpace()/1024/1024/1024-totalSize)+" GB");
+							log("Free space remaining after the download: "+(downloadFolder.getFreeSpace()/1000/1000/1000-totalSize)+" GB");
 							try 
 							{
 								downloadTorrent(cfduid,pass,phpsessid,uid,td.downloadLink,expectedTorrentPath); //trebuie specificat numele aici
@@ -586,23 +586,14 @@ public class RunThread extends Thread implements Runnable
 							}
 							else
 							{
-								if (connection.cleanup((long) (td.downloadSize*1024l*1024l*1024l)))
+								if (connection.cleanup((long) (td.downloadSize*1000l*1000l*1000l)))
 								{
 									log("Cleanup successful! Will try to download this torrent again.");
 									log("Asking Transmission again how much free space there is.");
 									freeSpaceOnTransmission = connection.getFreeSpaceAndDownDir().getKey();
-									log("Got response: "+freeSpaceOnTransmission+" bytes = "+freeSpaceOnTransmission/1024/1024+" MB");
+									log("Got response: "+freeSpaceOnTransmission+" bytes = "+freeSpaceOnTransmission/1000/1000+" MB");
 									i--;
 									retryCount++;
-	//								if (retryCount==maxRetry)
-	//								{
-	//									log("Infinite loop detected, skipping torrent.");
-	//									i++;
-	//								}
-	//								else
-	//								{
-	//									i--; //mergem un pas inapoi sa il ia iar
-	//								}
 								}
 								else
 								{
