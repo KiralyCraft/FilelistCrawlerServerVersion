@@ -21,14 +21,27 @@ public class Main
 
 	public static void main(String[] args) 
 	{
-		disableCertificateValidation();
-		System.setProperty("http.proxyHost", "127.0.0.1");
-	    System.setProperty("https.proxyHost", "127.0.0.1");
-	    System.setProperty("http.proxyPort", "8888");
-	    System.setProperty("https.proxyPort", "8888");
+		if (args.length>=1)
+		{
+			if (args[0].equalsIgnoreCase("debug"))
+			{
+				System.out.println("ENABLING DEBUG MODE. PROXIED TO 127.0.0.1:8888, NO CERTIFICATE VALIDATION.");
+				disableCertificateValidation();
+				System.setProperty("http.proxyHost", "127.0.0.1");
+			    System.setProperty("https.proxyHost", "127.0.0.1");
+			    System.setProperty("http.proxyPort", "8888");
+			    System.setProperty("https.proxyPort", "8888");
+				System.setProperty( "sun.security.ssl.allowUnsafeRenegotiation", "true" );
+			}
+		}
+//		disableCertificateValidation();
+//		System.setProperty("http.proxyHost", "127.0.0.1");
+//	    System.setProperty("https.proxyHost", "127.0.0.1");
+//	    System.setProperty("http.proxyPort", "8888");
+//	    System.setProperty("https.proxyPort", "8888");
 //	    System.setProperty("https.cipherSuites","TLS_RSA_WITH_AES_256_CBC_SHA");
 //		System.setProperty("https.protocols", "TLSv1.2");
-		System.setProperty( "sun.security.ssl.allowUnsafeRenegotiation", "true" );
+//		System.setProperty( "sun.security.ssl.allowUnsafeRenegotiation", "true" );
 	    new Main();
 	}
 	public static void disableCertificateValidation() 
