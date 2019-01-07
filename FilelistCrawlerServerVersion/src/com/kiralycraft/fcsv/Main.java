@@ -155,7 +155,7 @@ public class Main
 		}
 		else
 		{
-			System.out.println("Pentru a afla ce reprezinta urmatoarele campuri, te rugam sa urmaresti tutorialul de pe YouTube: https://www.youtube.com/channel/UCJS8YOWm03pH5K4phnwzWZQ ");
+			System.out.println("Pentru a afla ce reprezinta urmatoarele campuri, te rugam sa urmaresti tutorialul de pe YouTube: https://youtu.be/Zs5WOmdKiVo?t=1133 ");
 			System.out.println("Introdu CFDUID:");
 			cfduid = scan.nextLine();
 			System.out.println("Introdu PHPSessionID:");
