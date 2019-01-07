@@ -219,7 +219,7 @@ public class Connection
 			            TorrentInfo ti = new TorrentInfo(id,ratio,lastActivitySeconds,timeAddedSeconds,uploadEver,size,haveValid,name);
 			            
 			            tilist.add(ti); //doar daca indeplineste conditiile pentru a fi sters
-			            if ((ti.getUploadRatio()>1.0f || ti.getTimeAddedSeconds()>172800)) //daca are 48 de ore si nu o mai facut upload de o zi
+			            if ((ti.getUploadRatio()>1.0f || ti.getTimeAddedSeconds()>172800)) //daca are 48 de ore sau nu o mai facut upload de o zi
 			            {
 		//		            System.out.println(id+" "+ratio+" "+uploadEver+" "+size+" "+timeAddedSeconds+" "+lastActivitySeconds+" "+name);
 			            	ti.shouldBeProcessed=true;
