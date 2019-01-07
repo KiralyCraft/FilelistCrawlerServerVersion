@@ -99,6 +99,7 @@ public class Main
 		String downloadFolder = saveman.getKey("downloadFolder");
 		
 		System.out.println("You can type \"help\" to see various commands.");
+		
 		Connection connection = new Connection(transmissionuser,transmissionpassword,transmissionip);
 		RunThread runThread = new RunThread(Boolean.parseBoolean(usernamepassword),filelistusername,filelistpassword,cfduid,phpsessionid,pass,uid,fl,downloadFolder,freelechOnly,seedLeechRatio,saveman,connection);
 		runThread.start();
