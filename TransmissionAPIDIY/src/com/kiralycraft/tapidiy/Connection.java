@@ -748,4 +748,7 @@ public class Connection
 			return -2;
 		}
 	}
+	public boolean isLocalInstance() {
+		return isLocalInstance;
+	}
 }

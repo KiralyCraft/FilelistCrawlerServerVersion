@@ -375,6 +375,11 @@ public class RunThread extends Thread implements Runnable
 	public List<String> getLoginData(String cfduidtmp,String user,String password) throws Exception
 	{
 		String urlParameters  = "username="+user+"&password="+password;
+		if (!connection.isLocalInstance())
+		{
+			log("Activating \"Login on any IP\" because this is a remote instance.");
+			urlParameters+="&unlock=1";
+		}
 		byte[] postData       = urlParameters.getBytes( StandardCharsets.UTF_8 );
 		int    postDataLength = postData.length;
 		String request        = "https://filelist.ro/takelogin.php";
@@ -572,7 +577,7 @@ public class RunThread extends Thread implements Runnable
 								totalSize+=td.downloadSize;
 								log("Okay! Downloading torrent: "+td.torrentName);
 								log("Total size: "+td.downloadSize+" GB, seeders: "+td.seeders+", leechers: "+td.leechers+", ratio: "+td.leechseedratio);
-								log("Free space remaining after the download: "+((downloadFolder.getFreeSpace()-freeSpaceForDownloadingTorrents)/1000/1000/1000-totalSize)+" GB");
+								log("Free space remaining after the download: "+((freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000/1000/1000-totalSize)+" GB");
 								try 
 								{
 									downloadTorrent(cfduid,pass,phpsessid,uid,td.downloadLink,expectedTorrentPath); //trebuie specificat numele aici
