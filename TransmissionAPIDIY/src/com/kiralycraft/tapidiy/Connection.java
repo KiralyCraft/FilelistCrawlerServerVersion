@@ -271,12 +271,16 @@ public class Connection
 				{
 					for (TorrentInfo tmpti:toRemove)
 					{
-						System.out.println("Removing torrent instance from Transmission");
-						removeTorrent(tmpti.getId(),isLocalInstance);
 						if (isLocalInstance)
 						{
-							System.out.println("Removing associated files for:"+tmpti.getName());
+							System.out.println("Getting associated files for:"+tmpti.getName());
 							JsonArray files = getTorrentFiles(tmpti.getId());
+							
+							System.out.println("Removing torrent instance from Transmission");
+							removeTorrent(tmpti.getId(),isLocalInstance);
+							
+							System.out.println("Removing associated files for:"+tmpti.getName());
+							
 							for (JsonElement je:files)
 							{
 								String toDeletePath = je.getAsJsonObject().getAsJsonPrimitive("name").getAsString();
@@ -305,6 +309,11 @@ public class Connection
 									}
 								}
 							}
+						}
+						else
+						{
+							System.out.println("Removing torrent instance from Transmission ( with associated files, remotely)");
+							removeTorrent(tmpti.getId(),isLocalInstance);
 						}
 					}
 					return true;
