@@ -285,6 +285,7 @@ public class Connection
 							{
 								String toDeletePath = je.getAsJsonObject().getAsJsonPrimitive("name").getAsString();
 								File fileToDelete = new File(downloadDir+File.separator+toDeletePath);
+								System.out.println("Expecting file at: \""+fileToDelete.getAbsolutePath()+"\". Does it exist? "+fileToDelete.exists()+".");
 								System.out.println("Erasing "+toDeletePath);
 								
 								for (int i=0;i<=10;i++)
