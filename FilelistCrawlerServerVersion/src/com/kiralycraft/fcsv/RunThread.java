@@ -584,7 +584,7 @@ public class RunThread extends Thread implements Runnable
 						if (!expectedTorrentPath.exists())
 						{
 							if ((freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000/1000/1000>=(totalSize+td.downloadSize) //daca avem destul spatiu fizic pentru torrent
-									&& (softQuotaBytes!=-1 || (totalSize+td.downloadSize+currentUsedSpace)<softQuotaBytes/1000/1000/1000))//daca quota e dezactivat, true aici. daca nu, si download curent + cat e ocupat deja > quota, false
+									&& (softQuotaBytes==-1 || (totalSize+td.downloadSize+currentUsedSpace)<softQuotaBytes/1000/1000/1000))//daca quota e dezactivat, true aici. daca nu, si download curent + cat e ocupat deja > quota, false
  							{
 								torrentsPendingDownload.add(expectedTorrentPath.getAbsolutePath());
 								totalSize+=td.downloadSize;

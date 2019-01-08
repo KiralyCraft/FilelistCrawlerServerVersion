@@ -100,7 +100,7 @@ public class Main
 		String softQuotaBytesString = saveman.getKey("softQuotaBytes");
 		
 		long softQuotaBytes = -1;
-		if (softQuotaBytesString.equals("null"))
+		if (!softQuotaBytesString.equals("null"))
 		{
 			softQuotaBytes = Long.parseLong(softQuotaBytesString);
 		}
