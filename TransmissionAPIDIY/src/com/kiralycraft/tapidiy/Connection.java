@@ -761,4 +761,23 @@ public class Connection
 	public boolean isLocalInstance() {
 		return isLocalInstance;
 	}
+	public long getUsedSpace()
+	{
+		long spaceUsed=0;
+        if (updateTorrentInfo())
+        {
+            JsonArray allTorrents = torrentInfo.getAsJsonObject("arguments").getAsJsonArray("torrents");
+ 
+            for (JsonElement obj:allTorrents)
+            {
+                spaceUsed += obj.getAsJsonObject().getAsJsonPrimitive("sizeWhenDone").getAsLong();
+            }
+            return spaceUsed;
+        }
+        else
+        {
+            System.out.println("Unable to get downloading torrents info to calculate used space");
+            return -1;
+        }
+	}
 }

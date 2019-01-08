@@ -97,11 +97,19 @@ public class Main
 		String freelechOnly = saveman.getKey("freelechOnly");
 		String seedLeechRatio = saveman.getKey("seedLeechRatio");
 		String downloadFolder = saveman.getKey("downloadFolder");
+		String softQuotaBytesString = saveman.getKey("softQuotaBytes");
+		
+		long softQuotaBytes = -1;
+		if (softQuotaBytesString.equals("null"))
+		{
+			softQuotaBytes = Long.parseLong(softQuotaBytesString);
+		}
+		
 		
 		System.out.println("You can type \"help\" to see various commands.");
 		
 		Connection connection = new Connection(transmissionuser,transmissionpassword,transmissionip);
-		RunThread runThread = new RunThread(Boolean.parseBoolean(usernamepassword),filelistusername,filelistpassword,cfduid,phpsessionid,pass,uid,fl,downloadFolder,freelechOnly,seedLeechRatio,saveman,connection);
+		RunThread runThread = new RunThread(Boolean.parseBoolean(usernamepassword),filelistusername,filelistpassword,cfduid,phpsessionid,pass,uid,fl,downloadFolder,freelechOnly,seedLeechRatio,saveman,connection,softQuotaBytes);
 		runThread.start();
 		
 		Scanner scan = new Scanner(System.in);
@@ -187,6 +195,16 @@ public class Main
 		System.out.println("Te rugam sa introduci calea completa a folderului unde se vor descarca fisierele .torrent . Nu lasa acest camp gol!");
 		String downloadFolder = scan.nextLine();
 		
+		System.out.println("Doersti sa activezi soft quota? Aceasta optiune limiteaza spatiul folosit de catre Transmission. Daca da, te rugam sa introduci dimensiunea in MB");
+		String softQuotaBytes = scan.nextLine();
+		if (softQuotaBytes.length()>0)
+		{
+			saveman.setKey("softQuotaBytes", Integer.parseInt(softQuotaBytes)*1000*1000+"");
+		}
+		else
+		{
+			saveman.setKey("softQuotaBytes", "null");
+		}
 		
 		saveman.setKey("init", "true");
 		saveman.setKey("transmissionip", ip);

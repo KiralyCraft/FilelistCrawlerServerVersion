@@ -48,6 +48,8 @@ public class RunThread extends Thread implements Runnable
 	
 	float maxSpeedUp = 0.1f;
 	
+	long softQuotaBytes;
+	
 	///////////////////////////////////////////////////
 	ArrayList<TorrentData> torrentDataList = new ArrayList<TorrentData>();
 	class TorrentData
@@ -76,8 +78,9 @@ public class RunThread extends Thread implements Runnable
 	}
 	///////////////////////////////////////////////////
 	
-	public RunThread(boolean loginwithusername,String username,String password,String cfduid,String phpsessid,String pass,String uid,String fl,String downloadFolder,String freelechonly,String seedleechratio,SaveManager saveman,Connection connection)
+	public RunThread(boolean loginwithusername,String username,String password,String cfduid,String phpsessid,String pass,String uid,String fl,String downloadFolder,String freelechonly,String seedleechratio,SaveManager saveman,Connection connection, long softQuotaBytes)
 	{
+		this.softQuotaBytes = softQuotaBytes;
 		this.username = username;
 		this.password = password;
 		this.cfduid = cfduid;
@@ -537,6 +540,15 @@ public class RunThread extends Thread implements Runnable
 		log("Asking Transmission how much free space there is.");
 		long freeSpaceOnTransmission = connection.getFreeSpaceAndDownDir().getKey();
 		
+		long currentUsedSpace = 0;
+		if (softQuotaBytes!=-1)
+		{
+			log("SOFT QUOTA IS ACTIVATED: "+softQuotaBytes/1000/1000+" MB");
+			log("Asking Transmission how much current torrents take.");
+			currentUsedSpace = connection.getUsedSpace();
+			log("Got response: "+currentUsedSpace+" bytes = "+currentUsedSpace/1000/1000+" MB");
+		}
+		
 //		for (TorrentData td:torrentDataList)
 		if (freeSpaceOnTransmission == -1)
 		{
@@ -571,8 +583,9 @@ public class RunThread extends Thread implements Runnable
 						File expectedTorrentPath = new File(downloadFolder.getAbsolutePath()+File.separator+getTorrentFilename(td.torrentName));
 						if (!expectedTorrentPath.exists())
 						{
-							if ((freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000/1000/1000>=(totalSize+td.downloadSize))
-							{
+							if ((freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000/1000/1000>=(totalSize+td.downloadSize) //daca avem destul spatiu fizic pentru torrent
+									&& (softQuotaBytes!=-1 || (totalSize+td.downloadSize+currentUsedSpace)<softQuotaBytes/1000/1000/1000))//daca quota e dezactivat, true aici. daca nu, si download curent + cat e ocupat deja > quota, false
+ 							{
 								torrentsPendingDownload.add(expectedTorrentPath.getAbsolutePath());
 								totalSize+=td.downloadSize;
 								log("Okay! Downloading torrent: "+td.torrentName);
@@ -591,6 +604,10 @@ public class RunThread extends Thread implements Runnable
 							}
 							else
 							{
+                                if (softQuotaBytes!=-1)
+                                {
+                                	log("With this torrent, out total used space would be: "+(totalSize+td.downloadSize+currentUsedSpace)/1000/1000+" MB.");
+                                }
 								log("Not enough space to download "+td.torrentName+". It requires "+td.downloadSize+" GB");
 								log("Will ask Transmission to do a cleanup.");
 								if (retryCount>maxRetry)
@@ -612,7 +629,7 @@ public class RunThread extends Thread implements Runnable
                                         freeSpaceForDownloadingTorrents = connection.getDownloadingTorrentsSpaceNeeded();
                                         log("Got response: "+freeSpaceForDownloadingTorrents+" bytes = "+freeSpaceForDownloadingTorrents/1000/1000+" MB");
                                         log("Available space is : "+(freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)+" bytes = "+(freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000/1000+" MB");
-										
+                                        
                                         i--;
 										retryCount++;
 									}
