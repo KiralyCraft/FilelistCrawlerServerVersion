@@ -199,7 +199,7 @@ public class Main
 		String softQuotaBytes = scan.nextLine();
 		if (softQuotaBytes.length()>0)
 		{
-			saveman.setKey("softQuotaBytes", Integer.parseInt(softQuotaBytes)*1000*1000+"");
+			saveman.setKey("softQuotaBytes", Long.parseLong(softQuotaBytes)*1000*1000+"");
 		}
 		else
 		{
