@@ -583,14 +583,14 @@ public class RunThread extends Thread implements Runnable
 						File expectedTorrentPath = new File(downloadFolder.getAbsolutePath()+File.separator+getTorrentFilename(td.torrentName));
 						if (!expectedTorrentPath.exists())
 						{
-							if ((freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000/1000/1000>=(totalSize+td.downloadSize) //daca avem destul spatiu fizic pentru torrent
-									&& (softQuotaBytes==-1 || (totalSize+td.downloadSize+currentUsedSpace)<softQuotaBytes/1000/1000/1000))//daca quota e dezactivat, true aici. daca nu, si download curent + cat e ocupat deja > quota, false
+							if ((freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000d/1000d/1000d>=(totalSize+td.downloadSize) //daca avem destul spatiu fizic pentru torrent
+									&& (softQuotaBytes==-1 || (totalSize+td.downloadSize+currentUsedSpace/1000d/1000d/1000d)<softQuotaBytes/1000d/1000d/1000d))//daca quota e dezactivat, true aici. daca nu, si download curent + cat e ocupat deja > quota, false
  							{
 								torrentsPendingDownload.add(expectedTorrentPath.getAbsolutePath());
 								totalSize+=td.downloadSize;
 								log("Okay! Downloading torrent: "+td.torrentName);
 								log("Total size: "+td.downloadSize+" GB, seeders: "+td.seeders+", leechers: "+td.leechers+", ratio: "+td.leechseedratio);
-								log("Free space remaining after the download: "+((freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000/1000/1000-totalSize)+" GB");
+								log("Free space remaining after the download: "+((freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000d/1000d/1000d-totalSize)+" GB");
 								try 
 								{
 									downloadTorrent(cfduid,pass,phpsessid,uid,td.downloadLink,expectedTorrentPath); //trebuie specificat numele aici
@@ -606,7 +606,7 @@ public class RunThread extends Thread implements Runnable
 							{
                                 if (softQuotaBytes!=-1)
                                 {
-                                	log("With this torrent, out total used space would be: "+(totalSize+td.downloadSize+currentUsedSpace)/1000/1000+" MB.");
+                                	log("With this torrent, out total used space would be: "+(totalSize+td.downloadSize+currentUsedSpace/1000d/1000d/1000d)+" GB.");
                                 }
 								log("Not enough space to download "+td.torrentName+". It requires "+td.downloadSize+" GB");
 								log("Will ask Transmission to do a cleanup.");
