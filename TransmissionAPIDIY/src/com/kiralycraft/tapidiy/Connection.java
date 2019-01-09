@@ -156,6 +156,39 @@ public class Connection
 			return 0;
 		}
 	}
+	public boolean isTorrentStillPresent(String searchedName)
+	{
+		if (updateTorrentInfo())
+        {
+            JsonArray allTorrents = torrentInfo.getAsJsonObject("arguments").getAsJsonArray("torrents");
+ 
+            boolean found = false;
+            for (JsonElement obj:allTorrents)
+            {
+            	int id = obj.getAsJsonObject().getAsJsonPrimitive("id").getAsInt();
+            	JsonObject activityInfo = getTorrentInfo(id);//daca nu exista torrent cu id-ul ala atunci returneaza un jsonobject cu un jsonarray empty
+            	JsonArray torrentInfo = activityInfo.getAsJsonArray("torrents");
+            	
+            	if (torrentInfo.size()>=1)//ajunge asta? e restul redundant? better safe than sorry! e necesar in caz ca se sterge torrentul fix inainte de getTorrentInfo si verificare
+            	{
+		            JsonObject torrentList = torrentInfo.get(0).getAsJsonObject();
+		            
+	            	String name = torrentList.getAsJsonPrimitive("name").getAsString();
+	            	if (name.equals(searchedName))
+	            	{
+	            		found=true;
+	            		break;
+	            	}
+            	}
+            }
+            return found;
+        }
+        else
+        {
+            System.out.println("Unable to check if torrent is still there. Assuming it is.");
+            return true;
+        }
+	}
     public long getDownloadingTorrentsSpaceNeeded() 
     {
         long spaceNeeded=0;
@@ -187,6 +220,7 @@ public class Connection
 	{
 		if (!updateTorrentInfo())
 		{
+			System.out.println("Unable to update torrent info during cleanup.");
 			return false;
 		}
 		else
@@ -221,8 +255,10 @@ public class Connection
 			            tilist.add(ti); //doar daca indeplineste conditiile pentru a fi sters
 			            if ((ti.getUploadRatio()>1.0f || ti.getTimeAddedSeconds()>172800)) //daca are 48 de ore sau nu o mai facut upload de o zi
 			            {
-		//		            System.out.println(id+" "+ratio+" "+uploadEver+" "+size+" "+timeAddedSeconds+" "+lastActivitySeconds+" "+name);
+//			            	System.out.println(ratio);
+//				            System.out.println(id+" "+ratio+" "+uploadEver+" "+size+" "+timeAddedSeconds+" "+lastActivitySeconds+" "+name);
 			            	ti.shouldBeProcessed=true;
+			            	System.out.println("Should be removed: "+name);
 			            }
 		            }
 				}
@@ -246,83 +282,97 @@ public class Connection
 			String downloadDir = freespaceAndDownDir.getValue();
 			long freeableSpace = 0;
 			
-			if (spaceNeeded<currentFreeSpace)
+			boolean enoughSpaceFreeable = false;
+			ArrayList<TorrentInfo> toRemove = new ArrayList<TorrentInfo>();
+			for (TorrentInfo tmpti:tilist)
 			{
+				if (tmpti.shouldBeProcessed)
+				{
+					freeableSpace+=tmpti.getSize();
+					toRemove.add(tmpti);
+					if (spaceNeeded<currentFreeSpace+freeableSpace)
+					{
+						enoughSpaceFreeable = true;
+						break;
+					}
+				}
+			}
+			if (enoughSpaceFreeable)
+			{
+				for (TorrentInfo tmpti:toRemove)
+				{
+					if (isLocalInstance)
+					{
+						System.out.println("Getting associated files for:"+tmpti.getName());
+						JsonArray files = getTorrentFiles(tmpti.getId());
+						
+						System.out.println("Removing torrent instance from Transmission");
+						removeTorrent(tmpti.getId(),isLocalInstance);
+						
+						System.out.println("Removing associated files for:"+tmpti.getName());
+						
+						for (JsonElement je:files)
+						{
+							String toDeletePath = je.getAsJsonObject().getAsJsonPrimitive("name").getAsString();
+							File fileToDelete = new File(downloadDir+File.separator+toDeletePath);
+							System.out.println("Expecting file at: \""+fileToDelete.getAbsolutePath()+"\". Does it exist? "+fileToDelete.exists()+".");
+							System.out.println("Erasing "+toDeletePath);
+							
+							for (int i=0;i<=10;i++)
+							{
+								if (i==10)
+								{
+									System.out.println("Failed to delete after 10 tries! Aborting ...");
+									return false;
+								}
+								if (!fileToDelete.delete())
+								{
+									System.out.println("Failed to delete! Will retry in 1 second. Retry #"+i);
+									try
+									{
+										Thread.sleep(1000);
+									} 
+									catch (InterruptedException e)
+									{
+										;
+									}
+									
+								}
+							}
+						}
+					}
+					else
+					{
+						System.out.println("Removing torrent instance from Transmission ( with associated files, remotely)");
+						removeTorrent(tmpti.getId(),isLocalInstance);
+						System.out.println("Torrent removed. Waiting up to 60 seconds to make sure it's gone.");
+						boolean gone = false;
+						for (int i=0;i<60;i++)
+						{
+							System.out.println("Checking. Is it gone?");
+							if (isTorrentStillPresent(tmpti.getName()))
+							{
+								System.out.println("Still there. Waiting one second. Will try for another "+(60-i-1)+" seconds.");
+							}
+							else
+							{
+								System.out.println("Yay! It's gone.");
+								gone = true;
+								break;
+							}
+						}
+						if (!gone)
+						{
+							System.out.println("It doesn't want to go away! This routine is done now. Not this function's problem anymore.");
+						}
+						
+					}
+				}
 				return true;
 			}
 			else
 			{
-				boolean enoughSpaceFreeable = false;
-				ArrayList<TorrentInfo> toRemove = new ArrayList<TorrentInfo>();
-				for (TorrentInfo tmpti:tilist)
-				{
-					if (tmpti.shouldBeProcessed)
-					{
-						freeableSpace+=tmpti.getSize();
-						toRemove.add(tmpti);
-						if (spaceNeeded<currentFreeSpace+freeableSpace)
-						{
-							enoughSpaceFreeable = true;
-							break;
-						}
-					}
-				}
-				if (enoughSpaceFreeable)
-				{
-					for (TorrentInfo tmpti:toRemove)
-					{
-						if (isLocalInstance)
-						{
-							System.out.println("Getting associated files for:"+tmpti.getName());
-							JsonArray files = getTorrentFiles(tmpti.getId());
-							
-							System.out.println("Removing torrent instance from Transmission");
-							removeTorrent(tmpti.getId(),isLocalInstance);
-							
-							System.out.println("Removing associated files for:"+tmpti.getName());
-							
-							for (JsonElement je:files)
-							{
-								String toDeletePath = je.getAsJsonObject().getAsJsonPrimitive("name").getAsString();
-								File fileToDelete = new File(downloadDir+File.separator+toDeletePath);
-								System.out.println("Expecting file at: \""+fileToDelete.getAbsolutePath()+"\". Does it exist? "+fileToDelete.exists()+".");
-								System.out.println("Erasing "+toDeletePath);
-								
-								for (int i=0;i<=10;i++)
-								{
-									if (i==10)
-									{
-										System.out.println("Failed to delete after 10 tries! Aborting ...");
-										return false;
-									}
-									if (!fileToDelete.delete())
-									{
-										System.out.println("Failed to delete! Will retry in 1 second. Retry #"+i);
-										try
-										{
-											Thread.sleep(1000);
-										} 
-										catch (InterruptedException e)
-										{
-											;
-										}
-										
-									}
-								}
-							}
-						}
-						else
-						{
-							System.out.println("Removing torrent instance from Transmission ( with associated files, remotely)");
-							removeTorrent(tmpti.getId(),isLocalInstance);
-						}
-					}
-					return true;
-				}
-				else
-				{
-					return false;
-				}
+				return false;
 			}
 		}
 	}
