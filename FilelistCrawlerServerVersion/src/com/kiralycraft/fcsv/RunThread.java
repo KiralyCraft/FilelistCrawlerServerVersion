@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -50,6 +51,8 @@ public class RunThread extends Thread implements Runnable
 	
 	long softQuotaBytes;
 	
+	ThxHandler thxhandler;
+	
 	///////////////////////////////////////////////////
 	ArrayList<TorrentData> torrentDataList = new ArrayList<TorrentData>();
 	class TorrentData
@@ -61,8 +64,9 @@ public class RunThread extends Thread implements Runnable
 		int leechers = 0;
 		int seeders = 0;
 		float leechseedratio=9999;
+		String id;
 		
-		public TorrentData(String namex,boolean freelechx, String downLinkx, double sizeGBx,int leechersx,int seedersx)
+		public TorrentData(String namex,boolean freelechx, String downLinkx, double sizeGBx,int leechersx,int seedersx, String id)
 		{
 			torrentName = namex;
 			freeleech = freelechx;
@@ -74,6 +78,7 @@ public class RunThread extends Thread implements Runnable
 			{
 				leechseedratio = (float)seeders / (float)leechers;
 			}
+			this.id = id;
 		}
 	}
 	///////////////////////////////////////////////////
@@ -96,6 +101,14 @@ public class RunThread extends Thread implements Runnable
 		this.connection = connection;
 		this.torrentsPendingDownload = new ArrayList<String>();
 		interrupted = false;
+		try
+		{
+			thxhandler = new ThxHandler(this.cfduid,this.pass,this.phpsessid,this.uid,this.fl);
+		}
+		catch (IOException e)
+		{
+			thxhandler = new ThxHandler();
+		}
 	}
 	public void interupt()
 	{
@@ -253,6 +266,7 @@ public class RunThread extends Thread implements Runnable
 			updateData(tmpLoginData);
 			log("Logging in ...");
 			updateData(getLoginData(cfduid, username, password));
+			thxhandler.updateData(this.cfduid,this.pass,this.phpsessid,this.uid,this.fl);
 			return true;
 		} catch (Exception e) 
 		{
@@ -496,6 +510,7 @@ public class RunThread extends Thread implements Runnable
 			  double downloadSize = 0;
 			  int leechers = 0;
 			  int seeders = 0;
+			  String id;
 			  ////////////////////////////
 	          Elements torrentData = link.select("div.torrenttable");
 	          torrentName = torrentData.get(1).select("a[href]").attr("title");
@@ -508,6 +523,7 @@ public class RunThread extends Thread implements Runnable
 	        	  }
 	          }
 	          downloadLink = torrentData.get(3).select("a[href]").get(0).attr("href");
+	          id = downloadLink.substring(downloadLink.lastIndexOf("id=")+"id=".length());
 	          
 	          Element torrentSizeDiv = torrentData.get(6);
 	          String torrentSizeData[] = torrentSizeDiv.text().split("\\ ");
@@ -525,7 +541,7 @@ public class RunThread extends Thread implements Runnable
 	          Element leechersDiv = torrentData.get(9);
 	          leechers = Integer.parseInt(leechersDiv.text().replaceAll("\\D", ""));
 	          ////////////////////////////////////////////////
-	          torrentDataList.add(new TorrentData(torrentName,freeleech,downloadLink,downloadSize,leechers,seeders));
+	          torrentDataList.add(new TorrentData(torrentName,freeleech,downloadLink,downloadSize,leechers,seeders,id));
 	    }
 	}
 
@@ -549,7 +565,7 @@ public class RunThread extends Thread implements Runnable
 			log("Got response: "+currentUsedSpace+" bytes = "+currentUsedSpace/1000/1000+" MB");
 		}
 		
-//		for (TorrentData td:torrentDataList)
+		
 		if (freeSpaceOnTransmission == -1)
 		{
 			log("Transmission returned wrong response code while asking for free space!");
@@ -591,6 +607,8 @@ public class RunThread extends Thread implements Runnable
 								log("Okay! Downloading torrent: "+td.torrentName);
 								log("Total size: "+td.downloadSize+" GB, seeders: "+td.seeders+", leechers: "+td.leechers+", ratio: "+td.leechseedratio);
 								log("Free space remaining after the download: "+((freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000d/1000d/1000d-totalSize)+" GB");
+								log("Adding pending THX for torrent ID: "+td.id);
+								thxhandler.addPendingThx(td.id);
 								try 
 								{
 									downloadTorrent(cfduid,pass,phpsessid,uid,td.downloadLink,expectedTorrentPath); //trebuie specificat numele aici
@@ -650,6 +668,20 @@ public class RunThread extends Thread implements Runnable
 				}
             }
 		}
+		
+		
+		//THX ROUTINE
+		log("Starting to THX torrents. To go: "+thxhandler.getPendingThxCount());
+		int thxed = 0;
+		while(thxhandler.doThx())
+		{
+			thxed++;
+			log("Got one! So far: "+thxed);
+		}
+		log("Got "+(thxed*0.5d)+" FLCoins.");
+		
+		///
+		
 		return new Pair<Integer,Integer>(torrentsDownloaded,torrentDataList.size());
 	}
 	//////////////////////////////////////
