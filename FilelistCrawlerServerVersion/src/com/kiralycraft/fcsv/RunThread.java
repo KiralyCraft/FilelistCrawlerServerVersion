@@ -636,7 +636,7 @@ public class RunThread extends Thread implements Runnable
 								}
 								else
 								{
-									if (connection.cleanup((long) (td.downloadSize*1000l*1000l*1000l)))
+									if (connection.cleanup((long) (td.downloadSize*1000l*1000l*1000l),softQuotaBytes,currentUsedSpace))
 									{
 										log("Cleanup successful! Will try to download this torrent again.");
 										log("Asking Transmission again how much free space there is.");
