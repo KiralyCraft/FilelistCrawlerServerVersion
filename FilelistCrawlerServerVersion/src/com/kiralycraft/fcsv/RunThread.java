@@ -639,6 +639,10 @@ public class RunThread extends Thread implements Runnable
 									if (connection.cleanup((long) (td.downloadSize*1000l*1000l*1000l),softQuotaBytes))
 									{
 										log("Cleanup successful! Will try to download this torrent again.");
+										
+										log("Sleeping for 10 seconds to allow Transmission to update it's stats about free space");
+										Utils.sleep(10000);
+										
 										log("Asking Transmission again how much free space there is.");
 										freeSpaceOnTransmission = connection.getFreeSpaceAndDownDir().getKey();
 										log("Got response: "+freeSpaceOnTransmission+" bytes = "+freeSpaceOnTransmission/1000/1000+" MB");
@@ -648,11 +652,14 @@ public class RunThread extends Thread implements Runnable
                                         log("Got response: "+freeSpaceForDownloadingTorrents+" bytes = "+freeSpaceForDownloadingTorrents/1000/1000+" MB");
                                         log("Available space is : "+(freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)+" bytes = "+(freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000/1000+" MB");
                                         
+                                        log("Asking Transmission how much current torrents take.");
+                            			currentUsedSpace = connection.getUsedSpace();
+                            			log("Got response: "+currentUsedSpace+" bytes = "+currentUsedSpace/1000/1000+" MB");
+                                        
                                         i--;
 										retryCount++;
 										
-										log("Sleeping for 10 seconds to allow Transmission to update it's stats about free space");
-										Utils.sleep(10000);
+										
 									}
 									else
 									{
