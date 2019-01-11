@@ -181,7 +181,7 @@ public class RunThread extends Thread implements Runnable
 					
 					uploadSpeedAvg = 0;
 					speedMeasurements = 0;
-					for (int i=1;i<=180/5;i++) 
+					for (int i=1;i<=600/5;i++) 
 					{
 						if (interrupted)
 						{
