@@ -23,7 +23,7 @@ public class Main
 		{
 			if (args[0].equalsIgnoreCase("debug"))
 			{
-				System.out.println("ENABLING DEBUG MODE. PROXIED TO 127.0.0.1:8888, NO CERTIFICATE VALIDATION.");
+				Logger.log("ENABLING DEBUG MODE. PROXIED TO 127.0.0.1:8888, NO CERTIFICATE VALIDATION.");
 				disableCertificateValidation();
 				System.setProperty("http.proxyHost", "127.0.0.1");
 			    System.setProperty("https.proxyHost", "127.0.0.1");
@@ -104,7 +104,7 @@ public class Main
 		}
 		
 		
-		System.out.println("You can type \"help\" to see various commands.");
+		Logger.log("You can type \"help\" to see various commands.");
 		
 		Connection connection = new Connection(transmissionuser,transmissionpassword,transmissionip);
 		RunThread runThread = new RunThread(Boolean.parseBoolean(usernamepassword),filelistusername,filelistpassword,cfduid,phpsessionid,pass,uid,fl,downloadFolder,freelechOnly,seedLeechRatio,saveman,connection,softQuotaBytes);
@@ -115,7 +115,7 @@ public class Main
 		while (!lastScan.toLowerCase().equals("exit"))
 		{
 			lastScan = scan.nextLine();
-			System.out.println("Nu-i nici o comanda inca.");
+			Logger.log("Nu-i nici o comanda inca.");
 		}
 		scan.close();
 		System.exit(0);
@@ -123,20 +123,20 @@ public class Main
 	private void performInit(SaveManager saveman) 
 	{
 		Scanner scan = new Scanner(System.in);
-		System.out.println("Bine ai venit, vom face cativa pasi pentru a configura aceasta aplicatie. Introdu ce ti se cere, apoi apasa ENTER.");
-		System.out.println();
-		System.out.println("Prima data vom avea nevoie de adresa IP a serverului de Transmission. Ex: http://a.com:6882.");
-		System.out.println("Daca e server local, foloseste http://localhost:<port>");
+		Logger.log("Bine ai venit, vom face cativa pasi pentru a configura aceasta aplicatie. Introdu ce ti se cere, apoi apasa ENTER.");
+		Logger.log("");
+		Logger.log("Prima data vom avea nevoie de adresa IP a serverului de Transmission. Ex: http://a.com:6882.");
+		Logger.log("Daca e server local, foloseste http://localhost:<port>");
 		String ip = scan.nextLine();
-		System.out.println("Introdu username-ul cu care te loghezi pe serverul de Transmission.");
+		Logger.log("Introdu username-ul cu care te loghezi pe serverul de Transmission.");
 		String userStr = scan.nextLine();
-		System.out.println("Oblig utilizatorii sa isi puna username si parola pentru a spori securitatea.");
+		Logger.log("Oblig utilizatorii sa isi puna username si parola pentru a spori securitatea.");
 		Console console = System.console();
-		System.out.println("Acum introdu parola serverului de Transmission (nu va aparea pe ecran din motive de securitate)");
+		Logger.log("Acum introdu parola serverului de Transmission (nu va aparea pe ecran din motive de securitate)");
 		
 		String passwordStr = readPassowrd(console,scan);
 		
-		System.out.println("Doresti sa te loghezi pe Filelist.ro cu username si parola, sau cookies din browser? <U/c>");
+		Logger.log("Doresti sa te loghezi pe Filelist.ro cu username si parola, sau cookies din browser? <U/c>");
 		String choice = scan.nextLine();
 		boolean usernamePassowrd = true;
 		if (choice.startsWith("c"))
@@ -155,34 +155,34 @@ public class Main
 		String fl = "null";
 		if (usernamePassowrd)
 		{
-			System.out.println("Introdu username-ul cu care te loghezi pe Filelist.ro");
+			Logger.log("Introdu username-ul cu care te loghezi pe Filelist.ro");
 			flUsername = scan.nextLine();
-			System.out.println("Introdu parola cu care te loghezi pe Filelist.ro (nu va aparea pe ecran din motive de securitate)");
+			Logger.log("Introdu parola cu care te loghezi pe Filelist.ro (nu va aparea pe ecran din motive de securitate)");
 			flPassword = readPassowrd(console,scan);
 		}
 		else
 		{
-			System.out.println("Pentru a afla ce reprezinta urmatoarele campuri, te rugam sa urmaresti tutorialul de pe YouTube: https://youtu.be/Zs5WOmdKiVo?t=1133 ");
-			System.out.println("Introdu CFDUID:");
+			Logger.log("Pentru a afla ce reprezinta urmatoarele campuri, te rugam sa urmaresti tutorialul de pe YouTube: https://youtu.be/Zs5WOmdKiVo?t=1133 ");
+			Logger.log("Introdu CFDUID:");
 			cfduid = scan.nextLine();
-			System.out.println("Introdu PHPSessionID:");
+			Logger.log("Introdu PHPSessionID:");
 			phpsessionid = scan.nextLine();
-			System.out.println("Introdu UID:");
+			Logger.log("Introdu UID:");
 			uid = scan.nextLine();
-			System.out.println("Introdu pass (nu stiu de ce ii zice asa dar e un cookie):");
+			Logger.log("Introdu pass (nu stiu de ce ii zice asa dar e un cookie):");
 			pass = scan.nextLine();
-			System.out.println("Introdu fl:");
+			Logger.log("Introdu fl:");
 			fl = scan.nextLine();
 		}
 		
-		System.out.println("Doresti sa descarci doar torrente freelech? <Y/n>");
+		Logger.log("Doresti sa descarci doar torrente freelech? <Y/n>");
 		choice = scan.nextLine();
 		boolean freelechOnly = true;
 		if (choice.startsWith("n"))
 		{
 			freelechOnly = false;
 		}
-		System.out.println("Te rugam sa introduci SeedLeechRatio. Daca nu stii ce e, apasa ENTER fara sa scrii nimic si ne ocupam noi de restul.");
+		Logger.log("Te rugam sa introduci SeedLeechRatio. Daca nu stii ce e, apasa ENTER fara sa scrii nimic si ne ocupam noi de restul.");
 		float seedLeechRatio = 0.6f;
 		String seedLeechRatioStr = scan.nextLine();
 		if (seedLeechRatioStr.length()>0)
@@ -190,10 +190,10 @@ public class Main
 			seedLeechRatio = Float.parseFloat(seedLeechRatioStr);
 		}
 		
-		System.out.println("Te rugam sa introduci calea completa a folderului unde se vor descarca fisierele .torrent . Nu lasa acest camp gol!");
+		Logger.log("Te rugam sa introduci calea completa a folderului unde se vor descarca fisierele .torrent . Nu lasa acest camp gol!");
 		String downloadFolder = scan.nextLine();
 		
-		System.out.println("Doersti sa activezi soft quota? Aceasta optiune limiteaza spatiul folosit de catre Transmission. Daca da, te rugam sa introduci dimensiunea in MB");
+		Logger.log("Doersti sa activezi soft quota? Aceasta optiune limiteaza spatiul folosit de catre Transmission. Daca da, te rugam sa introduci dimensiunea in MB");
 		String softQuotaBytes = scan.nextLine();
 		if (softQuotaBytes.length()>0)
 		{
@@ -220,7 +220,7 @@ public class Main
 		saveman.setKey("seedLeechRatio", seedLeechRatio+"");
 		saveman.setKey("downloadFolder", downloadFolder+"");
 		
-		System.out.println("Configurare completa! Te rugam sa repornesti aplicatia.");
+		Logger.log("Configurare completa! Te rugam sa repornesti aplicatia.");
 	}
 	private String readPassowrd(Console console,Scanner scan) 
 	{
@@ -233,7 +233,7 @@ public class Main
 		}
 		else
 		{
-			System.out.println("Nu am reusit sa iti ascundem parola. Va fi vizibila cand o scrii, ai grija.");
+			Logger.log("Nu am reusit sa iti ascundem parola. Va fi vizibila cand o scrii, ai grija.");
 			passwordStr = scan.nextLine();
 		}
 		return passwordStr;
