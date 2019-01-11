@@ -211,7 +211,7 @@ public class RunThread extends Thread implements Runnable
 							{
 								uploadSpeedAvgFinal = uploadSpeedAvg/speedMeasurements;
 								uploadPotential = Math.min(100,(int)((uploadSpeedAvgFinal*100)/maxSpeedUp));
-								log("Avg upload speed: "+uploadSpeedAvgFinal+" MB/s. Upload potential "+uploadPotential+"%");
+								log("Avg upload speed: "+String.format("%5.2f", uploadSpeedAvgFinal)+" MB/s. Upload potential "+String.format("%2d", uploadPotential)+"%");
 								maxSpeedUp = Math.max(maxSpeedUp, uploadSpeedAvgFinal);
 								uploadSpeedAvg=0;
 								speedMeasurements=0;
