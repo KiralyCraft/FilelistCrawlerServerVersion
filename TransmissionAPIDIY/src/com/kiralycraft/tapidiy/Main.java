@@ -1,11 +1,5 @@
 package com.kiralycraft.tapidiy;
 
-import java.io.File;
-
-import com.google.gson.JsonElement;
-
-import javafx.util.Pair;
-
 public class Main {
 
 	public static void main(String[] args) 
