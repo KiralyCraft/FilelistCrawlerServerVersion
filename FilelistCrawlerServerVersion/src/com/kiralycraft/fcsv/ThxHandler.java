@@ -135,6 +135,7 @@ public class ThxHandler
 				{
 					thxQueue.remove(0);
 					dumpToFile();
+					System.out.println("THX successful! Removing from queue and dumping to file.");
 					return true;
 				}
 			}
@@ -144,6 +145,7 @@ public class ThxHandler
 		{
 			System.out.println("There's nothing to THX.");
 		}
+		System.out.println("THX failed! Quota hit?");
 		return false;
 	}
 	public int getPendingThxCount()
