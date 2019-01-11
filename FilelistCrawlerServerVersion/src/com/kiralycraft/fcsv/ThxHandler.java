@@ -144,7 +144,7 @@ public class ThxHandler
 		else
 		{
 			Logger.log("There's nothing to THX.");
-			return true;
+			return true; 
 		}
 		Logger.log("THX failed! Quota hit?");
 		return false;
