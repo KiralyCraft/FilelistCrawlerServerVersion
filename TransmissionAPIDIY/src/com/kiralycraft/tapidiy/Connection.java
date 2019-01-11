@@ -237,7 +237,7 @@ public class Connection
 		            int id = obj.getAsJsonObject().getAsJsonPrimitive("id").getAsInt();
 		            float ratio = obj.getAsJsonObject().getAsJsonPrimitive("uploadRatio").getAsFloat();
 		            long uploadEver = obj.getAsJsonObject().getAsJsonPrimitive("uploadedEver").getAsLong();
-		            long size = obj.getAsJsonObject().getAsJsonPrimitive("sizeWhenDone").getAsLong();
+		            long size = obj.getAsJsonObject().getAsJsonPrimitive("sizeWhenDone").getAsLong();//bytes
 		            long haveValid = obj.getAsJsonObject().getAsJsonPrimitive("haveValid").getAsLong();
 		            JsonObject activityInfo = getTorrentInfo(id);
 		            JsonObject torrentList = activityInfo.getAsJsonArray("torrents").get(0).getAsJsonObject();
@@ -290,8 +290,10 @@ public class Connection
 				{
 					freeableSpace+=tmpti.getSize();
 					toRemove.add(tmpti);
-					if (spaceNeeded<currentFreeSpace+freeableSpace)
+					System.out.println("Will remove: "+tmpti.getName()+". With this, we should have "+(freeableSpace/1000/1000)+" MB more free space.");
+					if (spaceNeeded<currentFreeSpace+freeableSpace)//TODO softquota aici
 					{
+						System.out.println("Looks like this is enough.");
 						enoughSpaceFreeable = true;
 						break;
 					}
@@ -343,7 +345,7 @@ public class Connection
 					}
 					else
 					{
-						System.out.println("Removing torrent instance from Transmission ( with associated files, remotely)");
+						System.out.println("Removing torrent instance from Transmission ( with associated files, remotely): "+tmpti.getName());
 						removeTorrent(tmpti.getId(),isLocalInstance);
 						System.out.println("Torrent removed. Waiting up to 60 seconds to make sure it's gone.");
 						boolean gone = false;
