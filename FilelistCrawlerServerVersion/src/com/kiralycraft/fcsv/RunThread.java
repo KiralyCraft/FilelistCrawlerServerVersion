@@ -650,6 +650,9 @@ public class RunThread extends Thread implements Runnable
                                         
                                         i--;
 										retryCount++;
+										
+										log("Sleeping for 10 seconds to allow Transmission to update it's stats about free space");
+										Utils.sleep(10000);
 									}
 									else
 									{
