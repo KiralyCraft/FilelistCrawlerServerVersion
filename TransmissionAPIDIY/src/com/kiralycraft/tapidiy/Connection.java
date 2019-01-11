@@ -216,7 +216,7 @@ public class Connection
             return -1;
         }
     }
-	public boolean cleanup(long spaceNeeded,long softQuotaBytes, long currentUsedSpace)
+	public boolean cleanup(long spaceNeeded,long softQuotaBytes)
 	{
 		if (!updateTorrentInfo())
 		{
@@ -276,6 +276,7 @@ public class Connection
 			////////////////////////////
 			////ACTUAL CLEANING/////////
 			////////////////////////////
+			long currentUsedSpace = getUsedSpace();
 			long freeSpaceForDownloadingTorrents = getDownloadingTorrentsSpaceNeeded();  
 			Pair<Long, String> freespaceAndDownDir = getFreeSpaceAndDownDir();
 			long currentFreeSpace = freespaceAndDownDir.getKey()-freeSpaceForDownloadingTorrents;
@@ -292,7 +293,7 @@ public class Connection
 					toRemove.add(tmpti);
 					System.out.println("Will remove: "+tmpti.getName()+". With this, we should have "+(freeableSpace/1000/1000)+" MB more free space.");
 					if (spaceNeeded<currentFreeSpace+freeableSpace &&
-							(softQuotaBytes==-1 || (currentUsedSpace-freeableSpace<softQuotaBytes)))
+							(softQuotaBytes==-1 || (currentUsedSpace-freeableSpace+spaceNeeded<softQuotaBytes)))
 					{
 						System.out.println("Looks like this is enough.");
 						enoughSpaceFreeable = true;
