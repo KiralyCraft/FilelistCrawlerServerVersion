@@ -21,8 +21,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import com.kiralycraft.tapidiy.Connection;
-import com.kiralycraft.tapidiy.Pair;
+import com.kiralycraft.fcsv.torrentinterfaces.GenericClientInterface;
 
 public class RunThread extends Thread implements Runnable 
 {
@@ -39,7 +38,7 @@ public class RunThread extends Thread implements Runnable
 	double seedleechratio;
 	SaveManager saveman;
 	boolean interrupted=false;
-	Connection connection;
+	GenericClientInterface connection;
 	ArrayList<String> torrentsPendingDownload;
 	
 	float uploadSpeedAvg = 0;
@@ -83,7 +82,7 @@ public class RunThread extends Thread implements Runnable
 	}
 	///////////////////////////////////////////////////
 	
-	public RunThread(boolean loginwithusername,String username,String password,String cfduid,String phpsessid,String pass,String uid,String fl,String downloadFolder,String freelechonly,String seedleechratio,SaveManager saveman,Connection connection, long softQuotaBytes)
+	public RunThread(boolean loginwithusername,String username,String password,String cfduid,String phpsessid,String pass,String uid,String fl,String downloadFolder,String freelechonly,String seedleechratio,SaveManager saveman,GenericClientInterface connection, long softQuotaBytes)
 	{
 		this.softQuotaBytes = softQuotaBytes;
 		this.username = username;

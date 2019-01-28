@@ -12,6 +12,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import com.kiralycraft.fcsv.torrentinterfaces.TransmissionInterface;
 import com.kiralycraft.tapidiy.Connection;
 
 public class Main 
@@ -106,8 +107,9 @@ public class Main
 		
 		System.out.println("You can type \"help\" to see various commands.");
 		
-		Connection connection = new Connection(transmissionuser,transmissionpassword,transmissionip);
-		RunThread runThread = new RunThread(Boolean.parseBoolean(usernamepassword),filelistusername,filelistpassword,cfduid,phpsessionid,pass,uid,fl,downloadFolder,freelechOnly,seedLeechRatio,saveman,connection,softQuotaBytes);
+//		Connection connection = new Connection(transmissionuser,transmissionpassword,transmissionip);
+		TransmissionInterface ti = new TransmissionInterface(transmissionuser,transmissionpassword,transmissionip);
+		RunThread runThread = new RunThread(Boolean.parseBoolean(usernamepassword),filelistusername,filelistpassword,cfduid,phpsessionid,pass,uid,fl,downloadFolder,freelechOnly,seedLeechRatio,saveman,ti,softQuotaBytes);
 		runThread.start();
 		
 		Scanner scan = new Scanner(System.in);
