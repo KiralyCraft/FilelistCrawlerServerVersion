@@ -126,7 +126,7 @@ public class SaveManager
 		 } 
 		 catch (IOException e) 
 		 {
-			System.out.println("Cannot save settings! "+e.getMessage());
+			Logger.log("Cannot save settings! "+e.getMessage());
 			e.printStackTrace();
 		 }
 	}

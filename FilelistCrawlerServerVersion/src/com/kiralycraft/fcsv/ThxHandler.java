@@ -52,7 +52,7 @@ public class ThxHandler
 			} 
 			catch (IOException e)
 			{
-				System.out.println("Failed to read pending THX file because: "+e.getMessage());
+				Logger.log("Failed to read pending THX file because: "+e.getMessage());
 			}
 		}
 	}
@@ -74,14 +74,14 @@ public class ThxHandler
 		}
 		catch (FileNotFoundException e)
 		{
-			System.out.println("Failed to write pending THX file because: "+e.getMessage());
+			Logger.log("Failed to write pending THX file because: "+e.getMessage());
 		}
 	}
 	public void addPendingThx(String torrentID)
 	{
 		if (!thxQueue.contains(torrentID))
 		{
-			System.out.println("Adding pending THX for torrent ID: "+torrentID);
+			Logger.log("Adding pending THX for torrent ID: "+torrentID);
 			thxQueue.add(torrentID);
 			dumpToFile();
 		}
@@ -91,7 +91,7 @@ public class ThxHandler
 		if (getPendingThxCount() > 0)
 		{
 			String torrentID = thxQueue.get(0);
-			System.out.println("Thx-ing torrent ID: "+torrentID);
+			Logger.log("Thx-ing torrent ID: "+torrentID);
 			///////ACTUAL OPERATION/////////
 			String urlParameters  = "action=add&ajax=1&torrentid="+torrentID;
 			byte[] postData       = urlParameters.getBytes( StandardCharsets.UTF_8 );
@@ -113,7 +113,7 @@ public class ThxHandler
 			}
 			
 			int responseCode = conn.getResponseCode();
-			System.out.println("Response Code : " + responseCode);
+			Logger.log("Response Code : " + responseCode);
 			BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 			String inputLine;
 			StringBuffer response = new StringBuffer();
@@ -126,7 +126,7 @@ public class ThxHandler
 			
 			if (responseCode!=200)
 			{
-				System.out.println("Something went horribly wrong when trying to THX. Got response code: "+responseCode+", expected 200");
+				Logger.log("Something went horribly wrong when trying to THX. Got response code: "+responseCode+", expected 200");
 			}
 			else
 			{
@@ -135,7 +135,7 @@ public class ThxHandler
 				{
 					thxQueue.remove(0);
 					dumpToFile();
-					System.out.println("THX successful! Removing from queue and dumping to file.");
+					Logger.log("THX successful! Removing from queue and dumping to file.");
 					return true;
 				}
 			}
@@ -143,9 +143,10 @@ public class ThxHandler
 		}
 		else
 		{
-			System.out.println("There's nothing to THX.");
+			Logger.log("There's nothing to THX.");
+			return false; 
 		}
-		System.out.println("THX failed! Quota hit?");
+		Logger.log("THX failed! Quota hit?");
 		return false;
 	}
 	public int getPendingThxCount()

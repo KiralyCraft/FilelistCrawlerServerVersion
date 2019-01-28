@@ -9,9 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -116,23 +114,23 @@ public class RunThread extends Thread implements Runnable
 	@Override
 	public void run()
 	{
-		log("Starting in progress");
-		log("Connecting to Transmission ...");
+		Logger.log("Starting in progress");
+		Logger.log("Connecting to Transmission ...");
 		int loginResult = connection.login();
 		if (loginResult == 1)
 		{
-			log("Connection to Transmission successfull");
+			Logger.log("Connection to Transmission successfull");
 			if (loginwithusername)
 			{
-				log("Logging into Filelist.ro with username and password");
+				Logger.log("Logging into Filelist.ro with username and password");
 				 if (FLloginProcedure()==true)
 				 {
-					 log("Logged in!");
+					 Logger.log("Logged in!");
 				 }
 			}
 			else
 			{
-				log("Logging into Filelist.ro with cookies.");
+				Logger.log("Logging into Filelist.ro with cookies.");
 			}
 			
 			//////LOADING SAVED STATISTICS///////////
@@ -155,16 +153,16 @@ public class RunThread extends Thread implements Runnable
 				}
 				try 
 				{
-					log("Clearing Torrent Cache ...");
+					Logger.log("Clearing Torrent Cache ...");
 					torrentDataList.clear();
-					log("Getting the 1st torrent page ...");
+					Logger.log("Getting the 1st torrent page ...");
 					String browsePage = getBrowsePage(cfduid,pass,phpsessid,uid,fl);
-					log("Grabbing torrent data ...");
+					Logger.log("Grabbing torrent data ...");
 					getTorrentData(browsePage);
-					log("Analyzing results ...");
+					Logger.log("Analyzing results ...");
 					Pair<Integer,Integer> torrentCount = parseTorrentData();
-					log("Analysis complete. Torrents that meet the requirements: "+torrentCount.getKey()+" out of "+torrentCount.getValue());
-					log("Now uploading to Transmission ...");
+					Logger.log("Analysis complete. Torrents that meet the requirements: "+torrentCount.getKey()+" out of "+torrentCount.getValue());
+					Logger.log("Now uploading to Transmission ...");
 					uploadPendingTorrents();
 					
 					saveman.setKey("cfduid", cfduid+"");
@@ -174,7 +172,7 @@ public class RunThread extends Thread implements Runnable
 					saveman.setKey("fl", fl+"");
 					saveman.setKey("usernamepassword", "false");
 					
-					log("Got cookies from Filelist.ro. Will use those instead next time.");
+					Logger.log("Got cookies from Filelist.ro. Will use those instead next time.");
 					
 	//				Utils.saveData(mainInstance, saveman);
 					
@@ -192,14 +190,14 @@ public class RunThread extends Thread implements Runnable
 						float tmpUploadSpeed = connection.getUploadSpeed();
 						if (tmpUploadSpeed == -1)
 						{
-							log("Transmission kicked us. Let's re-login!");
+							Logger.log("Transmission kicked us. Let's re-login!");
 							if (connection.login() == 1)
 							{
-								log("OK");
+								Logger.log("OK");
 							}
 							else
 							{
-								log("Something failed terribly wrong. Transmission will not accept us!");
+								Logger.log("Something failed terribly wrong. Transmission will not accept us!");
 							}
 						}
 						uploadSpeedAvg+=tmpUploadSpeed;
@@ -210,7 +208,7 @@ public class RunThread extends Thread implements Runnable
 							{
 								uploadSpeedAvgFinal = uploadSpeedAvg/speedMeasurements;
 								uploadPotential = Math.min(100,(int)((uploadSpeedAvgFinal*100)/maxSpeedUp));
-								log("Avg upload speed: "+String.format("%5.2f", uploadSpeedAvgFinal)+" MB/s. Upload potential "+String.format("%2d", uploadPotential)+"%");
+								Logger.log("Avg upload speed: "+String.format("%5.2f", uploadSpeedAvgFinal)+" MB/s. Upload potential "+String.format("%2d", uploadPotential)+"%");
 								maxSpeedUp = Math.max(maxSpeedUp, uploadSpeedAvgFinal);
 								uploadSpeedAvg=0;
 								speedMeasurements=0;
@@ -230,7 +228,7 @@ public class RunThread extends Thread implements Runnable
 				{
 					if (!(e instanceof InterruptedException))
 					{
-						log("ERROR OCCURED! "+e.getMessage());
+						Logger.log("ERROR OCCURED! "+e.getMessage());
 						e.printStackTrace();
 						try 
 						{
@@ -240,19 +238,19 @@ public class RunThread extends Thread implements Runnable
 				}
 				
 			}
-			log("Worker thread has shut down");
+			Logger.log("Worker thread has shut down");
 		}
 		else if (loginResult == 2)
 		{
-			log("Invalid Transmission username or password. Authentication failed.");
+			Logger.log("Invalid Transmission username or password. Authentication failed.");
 		}
 		else if (loginResult == 3)
 		{
-			log("Invalid JSON cand trimiteam spre Transmission");
+			Logger.log("Invalid JSON cand trimiteam spre Transmission");
 		}
 		else if (loginResult == -1)
 		{
-			log("Conectarea la Transmission a rezultat intr-o eroare necunoscuta/nedocumentata.");
+			Logger.log("Conectarea la Transmission a rezultat intr-o eroare necunoscuta/nedocumentata.");
 		}
 	}
 	
@@ -260,69 +258,69 @@ public class RunThread extends Thread implements Runnable
 	{
 		try 
 		{
-			log("Acquiring CFDUID ...");
+			Logger.log("Acquiring CFDUID ...");
 			List<String> tmpLoginData = getCFDUID();
 			updateData(tmpLoginData);
-			log("Logging in ...");
+			Logger.log("Logging in ...");
 			updateData(getLoginData(cfduid, username, password));
 			thxhandler.updateData(this.cfduid,this.pass,this.phpsessid,this.uid,this.fl);
 			return true;
 		} catch (Exception e) 
 		{
-			log("Error! "+e.getMessage());
+			Logger.log("Error! "+e.getMessage());
 			return false;
 		}
 	}
 	private void uploadPendingTorrents() 
 	{
-		log("Asking Transmission where to store the torrent");
+		Logger.log("Asking Transmission where to store the torrent");
 		String downLocation = this.connection.getFreeSpaceAndDownDir().getValue();
 		if (downLocation.length()==0)
 		{
-			log("Transmission gave us fucked up download location!");
+			Logger.log("Transmission gave us fucked up download location!");
 		}
 		else
 		{
-			log("Transmission replied with: \""+downLocation+"\"");
+			Logger.log("Transmission replied with: \""+downLocation+"\"");
 			int counter = 0;
 			for (String s:torrentsPendingDownload)
 			{
 				File torrent = new File(s);
 				if (torrent.exists() && torrent.isFile())
 				{
-					log("Uploading \""+torrent.getName()+"\" to Transmission...");
+					Logger.log("Uploading \""+torrent.getName()+"\" to Transmission...");
 					boolean okay = this.connection.uploadNewTorrent(downLocation, torrent);
 					if (okay==false)
 					{
-						log("Upload failed!");
+						Logger.log("Upload failed!");
 					}
 					else
 					{
-						log("Done.");
+						Logger.log("Done.");
 						counter++;
 					}
 				}
 				else
 				{
-					log("Torrent does not exist when trying to upload!");
-					log("Expected filename: "+torrent.getName());
-					log("Expected location: "+s);
+					Logger.log("Torrent does not exist when trying to upload!");
+					Logger.log("Expected filename: "+torrent.getName());
+					Logger.log("Expected location: "+s);
 				}
 			}
 
-			log("Upload done! "+counter+" / "+torrentsPendingDownload.size());
+			Logger.log("Upload done! "+counter+" / "+torrentsPendingDownload.size());
 			torrentsPendingDownload.clear();
 		}
 	}
-	public void log(String s)
-	{
-		System.out.println(getHour() +" "+ s);
-	}
-	private String getHour()
-	{
-		Date date=new Date();    
-		return "["+new SimpleDateFormat("HH:mm").format(date)+"]";
-	}
+//	public void Logger.log(String s)
+//	{
+//		System.out.println(getHour() +" "+ s);
+//	}
+//	private String getHour()
+//	{
+//		Date date=new Date();    
+//		return "["+new SimpleDateFormat("HH:mm").format(date)+"]";
+//	}
 	/////////////////////////////////////////
 	/////////////////////////////////////////
 	/////////////////////////////////////////
@@ -362,28 +360,28 @@ public class RunThread extends Thread implements Runnable
 				if (s.contains("__cfduid"))
 				{
 					cfduid = s.substring(s.indexOf("=")+1, s.indexOf(";"));
-					log("CFDUID: "+cfduid);
+					Logger.log("CFDUID: "+cfduid);
 					
 				}
 				else if (s.contains("PHPSESSID"))
 				{
 					phpsessid = s.substring(s.indexOf("=")+1, s.indexOf(";"));
-					log("PHPSESSID: "+phpsessid);
+					Logger.log("PHPSESSID: "+phpsessid);
 				}
 				else if (s.contains("pass"))
 				{
 					pass = s.substring(s.indexOf("=")+1, s.indexOf(";"));
-					log("PASS: "+pass);
+					Logger.log("PASS: "+pass);
 				}
 				else if (s.contains("uid"))
 				{
 					uid = s.substring(s.indexOf("=")+1, s.indexOf(";"));
-					log("UID: "+uid);
+					Logger.log("UID: "+uid);
 				}
 				else if (s.contains("fl"))
 				{
 					fl = s.substring(s.indexOf("=")+1, s.indexOf(";"));
-					log("FL: "+fl);
+					Logger.log("FL: "+fl);
 				}
 			}
 		}
@@ -393,7 +391,7 @@ public class RunThread extends Thread implements Runnable
 		String urlParameters  = "username="+user+"&password="+password;
 		if (!connection.isLocalInstance())
 		{
-			log("Activating \"Login on any IP\" because this is a remote instance.");
+			Logger.log("Activating \"Login on any IP\" because this is a remote instance.");
 			urlParameters+="&unlock=1";
 		}
 		byte[] postData       = urlParameters.getBytes( StandardCharsets.UTF_8 );
@@ -428,7 +426,7 @@ public class RunThread extends Thread implements Runnable
 		conn.connect();
 		
 		int responseCode = conn.getResponseCode();
-		log("Response Code : " + responseCode);
+		Logger.log("Response Code : " + responseCode);
 		BufferedReader in = new BufferedReader(
 		        new InputStreamReader(conn.getInputStream()));
 		String inputLine;
@@ -441,21 +439,21 @@ public class RunThread extends Thread implements Runnable
 		
 		if (responseCode!=200)
 		{
-			log("");
-			log("=====WARNING=====");
-			log("Response code was supposed to be 200, it was "+responseCode);
-			log("Check your Filelist.ro login data, it might not be correct");
-			log("=================");
-			log("");
+			Logger.log("");
+			Logger.log("=====WARNING=====");
+			Logger.log("Response code was supposed to be 200, it was "+responseCode);
+			Logger.log("Check your Filelist.ro login data, it might not be correct");
+			Logger.log("=================");
+			Logger.log("");
 			
-			log("We will try to log in with username & password to recover from this.");
+			Logger.log("We will try to log in with username & password to recover from this.");
 			if (FLloginProcedure())
 			{
-				log("Wohoo! Everything's okay now.");
+				Logger.log("Wohoo! Everything's okay now.");
 			}
 			else
 			{
-				log("Failed to log into Filelist.ro with username & password.");
+				Logger.log("Failed to log into Filelist.ro with username & password.");
 			}
 		}
 		return response.toString();
@@ -472,7 +470,7 @@ public class RunThread extends Thread implements Runnable
 		conn.connect();
 		
 		int responseCode = conn.getResponseCode();
-		log("Response Code : " + responseCode);
+		Logger.log("Response Code : " + responseCode);
 		
 //		String contentDisposition = conn.getHeaderField("Content-Disposition"); //old methods of getting filename
 //		String fileName = contentDisposition.substring(contentDisposition.indexOf("=")+1, contentDisposition.length()).replace("\"", "");
@@ -552,40 +550,40 @@ public class RunThread extends Thread implements Runnable
 		int retryCount = 0;
 		int maxRetry = 2;
 		
-		log("Asking Transmission how much free space there is.");
+		Logger.log("Asking Transmission how much free space there is.");
 		long freeSpaceOnTransmission = connection.getFreeSpaceAndDownDir().getKey();
 		
 		long currentUsedSpace = 0;
 		if (softQuotaBytes!=-1)
 		{
-			log("SOFT QUOTA IS ACTIVATED: "+softQuotaBytes/1000/1000+" MB");
-			log("Asking Transmission how much current torrents take.");
+			Logger.log("SOFT QUOTA IS ACTIVATED: "+softQuotaBytes/1000/1000+" MB");
+			Logger.log("Asking Transmission how much current torrents take.");
 			currentUsedSpace = connection.getUsedSpace();
-			log("Got response: "+currentUsedSpace+" bytes = "+currentUsedSpace/1000/1000+" MB");
+			Logger.log("Got response: "+currentUsedSpace+" bytes = "+currentUsedSpace/1000/1000+" MB");
 		}
 		
 		
 		if (freeSpaceOnTransmission == -1)
 		{
-			log("Transmission returned wrong response code while asking for free space!");
+			Logger.log("Transmission returned wrong response code while asking for free space!");
 		}
 		else if (freeSpaceOnTransmission == -2)
 		{
-			log("Transmission got an error asking for free space. Oh shit.");
+			Logger.log("Transmission got an error asking for free space. Oh shit.");
 		}
 		else
 		{
-			log("Got response: "+freeSpaceOnTransmission+" bytes = "+freeSpaceOnTransmission/1000/1000+" MB");
+			Logger.log("Got response: "+freeSpaceOnTransmission+" bytes = "+freeSpaceOnTransmission/1000/1000+" MB");
 			
-			log("Asking Transmission how much free is required for current downloading torrents.");
+			Logger.log("Asking Transmission how much free is required for current downloading torrents.");
             long freeSpaceForDownloadingTorrents = connection.getDownloadingTorrentsSpaceNeeded();     
             if (freeSpaceForDownloadingTorrents == -1) 
             {
-                log("Transmission returned wrong response code while asking for required space for downloading torrents!");
+                Logger.log("Transmission returned wrong response code while asking for required space for downloading torrents!");
             }
             else 
             {
-            	log("Got response: "+freeSpaceForDownloadingTorrents+" bytes = "+freeSpaceForDownloadingTorrents/1000/1000+" MB");
+            	Logger.log("Got response: "+freeSpaceForDownloadingTorrents+" bytes = "+freeSpaceForDownloadingTorrents/1000/1000+" MB");
 				for (int i=0;i<torrentDataList.size();i++)
 				{
 					TorrentData td = torrentDataList.get(i);
@@ -593,8 +591,8 @@ public class RunThread extends Thread implements Runnable
 					boolean ratioCheck = td.leechseedratio<=seedleechratio;
 					if (freelechCheck && ratioCheck)
 					{
-						log("==========================================");
-						log(td.torrentName+" - Checking requirements ...");
+						Logger.log("==========================================");
+						Logger.log(td.torrentName+" - Checking requirements ...");
 						File expectedTorrentPath = new File(downloadFolder.getAbsolutePath()+File.separator+getTorrentFilename(td.torrentName));
 						if (!expectedTorrentPath.exists())
 						{
@@ -603,57 +601,57 @@ public class RunThread extends Thread implements Runnable
  							{
 								torrentsPendingDownload.add(expectedTorrentPath.getAbsolutePath());
 								totalSize+=td.downloadSize;
-								log("Okay! Downloading torrent: "+td.torrentName);
-								log("Total size: "+td.downloadSize+" GB, seeders: "+td.seeders+", leechers: "+td.leechers+", ratio: "+td.leechseedratio);
-								log("Free space remaining after the download: "+((freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000d/1000d/1000d-totalSize)+" GB");
-								log("Adding pending THX for torrent ID: "+td.id);
+								Logger.log("Okay! Downloading torrent: "+td.torrentName);
+								Logger.log("Total size: "+td.downloadSize+" GB, seeders: "+td.seeders+", leechers: "+td.leechers+", ratio: "+td.leechseedratio);
+								Logger.log("Free space remaining after the download: "+((freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000d/1000d/1000d-totalSize)+" GB");
+								Logger.log("Adding pending THX for torrent ID: "+td.id);
 								thxhandler.addPendingThx(td.id);
 								try 
 								{
 									downloadTorrent(cfduid,pass,phpsessid,uid,td.downloadLink,expectedTorrentPath); //trebuie specificat numele aici
-									log("Success!");
+									Logger.log("Success!");
 									torrentsDownloaded++;
 								} 
 								catch (Exception e) 
 								{
-									log("ERROR! "+e.getMessage());
+									Logger.log("ERROR! "+e.getMessage());
 								}
 							}
 							else
 							{
                                 if (softQuotaBytes!=-1)
                                 {
-                                	log("With this torrent, out total used space would be: "+(totalSize+td.downloadSize+currentUsedSpace/1000d/1000d/1000d)+" GB.");
+                                	Logger.log("With this torrent, out total used space would be: "+(totalSize+td.downloadSize+currentUsedSpace/1000d/1000d/1000d)+" GB.");
                                 }
-								log("Not enough space to download "+td.torrentName+". It requires "+td.downloadSize+" GB");
-								log("Will ask Transmission to do a cleanup.");
+								Logger.log("Not enough space to download "+td.torrentName+". It requires "+td.downloadSize+" GB");
+								Logger.log("Will ask Transmission to do a cleanup.");
 								if (retryCount>maxRetry)
 								{
 									retryCount = 0;
 									i++;
-									log("Infinite loop detected, skipping torrent.");
+									Logger.log("Infinite loop detected, skipping torrent.");
 								}
 								else
 								{
 									if (connection.cleanup((long) (td.downloadSize*1000l*1000l*1000l),softQuotaBytes))
 									{
-										log("Cleanup successful! Will try to download this torrent again.");
+										Logger.log("Cleanup successful! Will try to download this torrent again.");
 										
-										log("Sleeping for 10 seconds to allow Transmission to update it's stats about free space");
+										Logger.log("Sleeping for 10 seconds to allow Transmission to update it's stats about free space");
 										Utils.sleep(10000);
 										
-										log("Asking Transmission again how much free space there is.");
+										Logger.log("Asking Transmission again how much free space there is.");
 										freeSpaceOnTransmission = connection.getFreeSpaceAndDownDir().getKey();
-										log("Got response: "+freeSpaceOnTransmission+" bytes = "+freeSpaceOnTransmission/1000/1000+" MB");
+										Logger.log("Got response: "+freeSpaceOnTransmission+" bytes = "+freeSpaceOnTransmission/1000/1000+" MB");
 										
-										log("Asking Transmission again  how much free is required for current downloading torrents.");
+										Logger.log("Asking Transmission again  how much free is required for current downloading torrents.");
                                         freeSpaceForDownloadingTorrents = connection.getDownloadingTorrentsSpaceNeeded();
-                                        log("Got response: "+freeSpaceForDownloadingTorrents+" bytes = "+freeSpaceForDownloadingTorrents/1000/1000+" MB");
-                                        log("Available space is : "+(freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)+" bytes = "+(freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000/1000+" MB");
+                                        Logger.log("Got response: "+freeSpaceForDownloadingTorrents+" bytes = "+freeSpaceForDownloadingTorrents/1000/1000+" MB");
+                                        Logger.log("Available space is : "+(freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)+" bytes = "+(freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000/1000+" MB");
                                         
-                                        log("Asking Transmission how much current torrents take.");
+                                        Logger.log("Asking Transmission how much current torrents take.");
                             			currentUsedSpace = connection.getUsedSpace();
-                            			log("Got response: "+currentUsedSpace+" bytes = "+currentUsedSpace/1000/1000+" MB");
+                            			Logger.log("Got response: "+currentUsedSpace+" bytes = "+currentUsedSpace/1000/1000+" MB");
                                         
                                         i--;
 										retryCount++;
@@ -662,17 +660,17 @@ public class RunThread extends Thread implements Runnable
 									}
 									else
 									{
-										log("Transmission failed to clean up enough space for this torrent, so we're skipping it.");
+										Logger.log("Transmission failed to clean up enough space for this torrent, so we're skipping it.");
 									}
 								}
 							}
 						}
 						else
 						{
-							log(td.torrentName+" already exists.");
+							Logger.log(td.torrentName+" already exists.");
 						}
-						log("==========================================");
-						log("");
+						Logger.log("==========================================");
+						Logger.log("");
 					}
 				}
             }
@@ -680,14 +678,14 @@ public class RunThread extends Thread implements Runnable
 		
 		
 		//THX ROUTINE
-		log("Starting to THX torrents. To go: "+thxhandler.getPendingThxCount());
+		Logger.log("Starting to THX torrents. To go: "+thxhandler.getPendingThxCount());
 		int thxed = 0;
 		while(thxhandler.doThx())
 		{
 			thxed++;
-			log("Got one! So far: "+thxed);
+			Logger.log("Got one! So far: "+thxed);
 		}
-		log("Got "+(thxed*0.5d)+" FLCoins.");
+		Logger.log("Got "+(thxed*0.5d)+" FLCoins.");
 		
 		///
 		
