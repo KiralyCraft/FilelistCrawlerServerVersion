@@ -680,13 +680,15 @@ public class RunThread extends Thread implements Runnable
 		Logger.log("Starting to THX torrents. To go: "+thxhandler.getPendingThxCount());
 		int thxed = 0;
 		int raspThx;
+		int index = 0;
 		do {
-			raspThx = thxhandler.doThx();
+			raspThx = thxhandler.doThx(index);
 			if (raspThx == 1) {
 				thxed++;
 				Logger.log("Got one! So far: "+thxed);
 			} else if (raspThx == 0) {
-				Logger.log("This one was dumped :( check dumpedthx file");
+				Logger.log("This one was skiped");
+				index++;
 			}
 		} while (raspThx != -1);
 		Logger.log("Got "+(thxed*0.5d)+" FLCoins.");

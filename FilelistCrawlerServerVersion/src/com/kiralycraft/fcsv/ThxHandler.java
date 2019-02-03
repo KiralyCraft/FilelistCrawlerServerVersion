@@ -1,12 +1,10 @@
 package com.kiralycraft.fcsv;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -92,11 +90,14 @@ public class ThxHandler
 			dumpToFile();
 		}
 	}
-	public int doThx() throws Exception
+	public int doThx(int index) throws Exception
 	{
-		if (getPendingThxCount() > 0)
+		//int indexTHX = 0;
+		
+		if (getPendingThxCount() > index)
 		{
-			String torrentID = thxQueue.get(0);
+			String torrentID = thxQueue.get(index);
+			
 			Logger.log("Thx-ing torrent ID: "+torrentID);
 			//////// CHECK THX BUTTON ///////
 			if (checkThxBtn(torrentID)) {
@@ -142,7 +143,7 @@ public class ThxHandler
 					String responseFinal = response.toString();
 					if (responseFinal.contains("Hide who thanked!"))
 					{
-						thxQueue.remove(0);
+						thxQueue.remove(index);
 						dumpToFile();
 						Logger.log("THX successful! Removing from queue and dumping to file.");
 						return 1;
@@ -150,17 +151,20 @@ public class ThxHandler
 				}
 				////////////////////////////////
 			} else {
-				Logger.log("Thx btn not found, removing torrent from queue");
-				thxQueue.remove(0);
-				dumpToFile();
-				try(FileWriter fw = new FileWriter("dumpedthx.txt", true);
-					    BufferedWriter bw = new BufferedWriter(fw);
-					    PrintWriter out = new PrintWriter(bw))
-					{
-					    out.println(torrentID);
-					} catch (IOException e) {
-					    //exception handling left as an exercise for the reader
-					}
+				Logger.log("Thx btn not found, skipping to next torrent from queue");
+//				if (index < getPendingThxCount()) {
+//					index +=1;
+//				}
+//				thxQueue.remove(0);
+//				dumpToFile();
+//				try(FileWriter fw = new FileWriter("dumpedthx.txt", true);
+//					    BufferedWriter bw = new BufferedWriter(fw);
+//					    PrintWriter out = new PrintWriter(bw))
+//					{
+//					    out.println(torrentID);
+//					} catch (IOException e) {
+//					    //exception handling left as an exercise for the reader
+//					}
 				return 0;
 			}
 			
@@ -171,6 +175,7 @@ public class ThxHandler
 			return -1; 
 		}
 		Logger.log("THX failed! Quota hit");
+//		indexTHX +=1;
 		return -1;
 	}
 	public int getPendingThxCount()
