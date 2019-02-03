@@ -1,10 +1,12 @@
 package com.kiralycraft.fcsv;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -13,6 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 import javax.net.ssl.HttpsURLConnection;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
 public class ThxHandler
 {
@@ -86,68 +92,86 @@ public class ThxHandler
 			dumpToFile();
 		}
 	}
-	public boolean doThx() throws Exception
+	public int doThx() throws Exception
 	{
 		if (getPendingThxCount() > 0)
 		{
 			String torrentID = thxQueue.get(0);
 			Logger.log("Thx-ing torrent ID: "+torrentID);
-			///////ACTUAL OPERATION/////////
-			String urlParameters  = "action=add&ajax=1&torrentid="+torrentID;
-			byte[] postData       = urlParameters.getBytes( StandardCharsets.UTF_8 );
-			int    postDataLength = postData.length;
-			String request        = "https://filelist.ro/thanks.php";
-			URL    url            = new URL( request );
-			HttpsURLConnection conn= (HttpsURLConnection) url.openConnection();    
-			conn.setDoOutput( true );
-			conn.setInstanceFollowRedirects( false );
-			conn.setRequestMethod( "POST" );
-			
-			conn.setRequestProperty( "Cookie", "__cfduid="+cfduidtmp+"; PHPSESSID="+phpsessidtmp+"; uid="+uidtmp+"; pass="+passtmp+"; fl="+fl2);
-			conn.setRequestProperty( "Content-Length", Integer.toString( postDataLength ));
-			conn.connect();
-			
-			try( DataOutputStream wr = new DataOutputStream( conn.getOutputStream())) 
-			{
-			   wr.write( postData );
-			}
-			
-			int responseCode = conn.getResponseCode();
-			Logger.log("Response Code : " + responseCode);
-			BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-			String inputLine;
-			StringBuffer response = new StringBuffer();
-
-			while ((inputLine = in.readLine()) != null) 
-			{
-				response.append(inputLine+"\n");
-			}
-			in.close();
-			
-			if (responseCode!=200)
-			{
-				Logger.log("Something went horribly wrong when trying to THX. Got response code: "+responseCode+", expected 200");
-			}
-			else
-			{
-				String responseFinal = response.toString();
-				if (responseFinal.contains("Hide who thanked!"))
+			//////// CHECK THX BUTTON ///////
+			if (checkThxBtn(torrentID)) {
+				Logger.log("Thx btn found, continuing");
+				///////ACTUAL OPERATION/////////
+				String urlParameters  = "action=add&ajax=1&torrentid="+torrentID;
+				byte[] postData       = urlParameters.getBytes( StandardCharsets.UTF_8 );
+				int    postDataLength = postData.length;
+				String request        = "https://filelist.ro/thanks.php";
+				URL    url            = new URL( request );
+				HttpsURLConnection conn= (HttpsURLConnection) url.openConnection();    
+				conn.setDoOutput( true );
+				conn.setInstanceFollowRedirects( false );
+				conn.setRequestMethod( "POST" );
+				
+				conn.setRequestProperty( "Cookie", "__cfduid="+cfduidtmp+"; PHPSESSID="+phpsessidtmp+"; uid="+uidtmp+"; pass="+passtmp+"; fl="+fl2);
+				conn.setRequestProperty( "Content-Length", Integer.toString( postDataLength ));
+				conn.connect();
+				
+				try( DataOutputStream wr = new DataOutputStream( conn.getOutputStream())) 
 				{
-					thxQueue.remove(0);
-					dumpToFile();
-					Logger.log("THX successful! Removing from queue and dumping to file.");
-					return true;
+				   wr.write( postData );
 				}
+				
+				int responseCode = conn.getResponseCode();
+				Logger.log("Response Code : " + responseCode);
+				BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+				String inputLine;
+				StringBuffer response = new StringBuffer();
+
+				while ((inputLine = in.readLine()) != null) 
+				{
+					response.append(inputLine+"\n");
+				}
+				in.close();
+				
+				if (responseCode!=200)
+				{
+					Logger.log("Something went horribly wrong when trying to THX. Got response code: "+responseCode+", expected 200");
+				}
+				else
+				{
+					String responseFinal = response.toString();
+					if (responseFinal.contains("Hide who thanked!"))
+					{
+						thxQueue.remove(0);
+						dumpToFile();
+						Logger.log("THX successful! Removing from queue and dumping to file.");
+						return 1;
+					}
+				}
+				////////////////////////////////
+			} else {
+				Logger.log("Thx btn not found, removing torrent from queue");
+				thxQueue.remove(0);
+				dumpToFile();
+				try(FileWriter fw = new FileWriter("dumpedthx.txt", true);
+					    BufferedWriter bw = new BufferedWriter(fw);
+					    PrintWriter out = new PrintWriter(bw))
+					{
+					    out.println(torrentID);
+					} catch (IOException e) {
+					    //exception handling left as an exercise for the reader
+					}
+				return 0;
 			}
-			////////////////////////////////
+			
 		}
 		else
 		{
 			Logger.log("There's nothing to THX.");
-			return false; 
+			return -1; 
 		}
-		Logger.log("THX failed! Quota hit?");
-		return false;
+		Logger.log("THX failed! Quota hit");
+		return -1;
 	}
 	public int getPendingThxCount()
 	{
@@ -162,4 +186,51 @@ public class ThxHandler
 		this.fl2 = fl;
 		
 	}
+	public boolean checkThxBtn (String id) {
+		try {
+			String data = getTorrentPage(id);
+			Document txPage = Jsoup.parse(data);
+			Elements thxBtn = txPage.getElementsByAttributeValue("value","Say thanks!"); 
+			if (thxBtn.val() != "") {
+				return true;
+			} else {
+				return false;
+			}	
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("ERROR Parsing thxpage !");
+		}
+		return false;
+	}
+	
+	// Get torrent page 
+	public String getTorrentPage(String id) throws Exception
+	{
+		String request        = "https://filelist.ro/thanks.php?action=list&ajax=1&torrentid="+id;
+		URL    url            = new URL( request );
+		HttpsURLConnection conn= (HttpsURLConnection) url.openConnection();    
+		conn.setDoOutput( true );
+		conn.setInstanceFollowRedirects( false );
+		conn.setRequestMethod( "POST" );
+		conn.setRequestProperty( "Cookie", "__cfduid="+cfduidtmp+"; PHPSESSID="+phpsessidtmp+"; uid="+uidtmp+"; pass="+passtmp+"; fl="+fl2);
+		conn.connect();
+		
+		int responseCode = conn.getResponseCode();
+		BufferedReader in = new BufferedReader(
+		        new InputStreamReader(conn.getInputStream()));
+		String inputLine;
+		StringBuffer response = new StringBuffer();
+
+		while ((inputLine = in.readLine()) != null) {
+			response.append(inputLine+"\n");
+		}
+		in.close();
+		
+		if (responseCode!=200)
+		{
+			Logger.log("Response code was supposed to be 200, it was "+responseCode);		
+		}
+		return response.toString();
+	}
+	
 }

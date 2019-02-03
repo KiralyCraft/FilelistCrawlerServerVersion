@@ -13,7 +13,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import com.kiralycraft.fcsv.torrentinterfaces.TransmissionInterface;
-import com.kiralycraft.tapidiy.Connection;
 
 public class Main 
 {

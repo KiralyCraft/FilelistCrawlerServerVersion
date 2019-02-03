@@ -550,9 +550,6 @@ public class RunThread extends Thread implements Runnable
 		int retryCount = 0;
 		int maxRetry = 2;
 		
-		Logger.log("Asking Transmission how much free space there is.");
-		long freeSpaceOnTransmission = connection.getFreeSpaceAndDownDir().getKey();
-		
 		long currentUsedSpace = 0;
 		if (softQuotaBytes!=-1)
 		{
@@ -562,7 +559,9 @@ public class RunThread extends Thread implements Runnable
 			Logger.log("Got response: "+currentUsedSpace+" bytes = "+currentUsedSpace/1000/1000+" MB");
 		}
 		
-		
+		Logger.log("Asking Transmission how much free space there is.");
+		long freeSpaceOnTransmission = connection.getFreeSpaceAndDownDir().getKey();
+				
 		if (freeSpaceOnTransmission == -1)
 		{
 			Logger.log("Transmission returned wrong response code while asking for free space!");
@@ -680,14 +679,19 @@ public class RunThread extends Thread implements Runnable
 		//THX ROUTINE
 		Logger.log("Starting to THX torrents. To go: "+thxhandler.getPendingThxCount());
 		int thxed = 0;
-		while(thxhandler.doThx())
-		{
-			thxed++;
-			Logger.log("Got one! So far: "+thxed);
-		}
+		int raspThx;
+		do {
+			raspThx = thxhandler.doThx();
+			if (raspThx == 1) {
+				thxed++;
+				Logger.log("Got one! So far: "+thxed);
+			} else if (raspThx == 0) {
+				Logger.log("This one was dumped :( check dumpedthx file");
+			}
+		} while (raspThx != -1);
 		Logger.log("Got "+(thxed*0.5d)+" FLCoins.");
 		
-		///
+		//
 		
 		return new Pair<Integer,Integer>(torrentsDownloaded,torrentDataList.size());
 	}
