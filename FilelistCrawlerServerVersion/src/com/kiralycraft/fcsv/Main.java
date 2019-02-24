@@ -12,6 +12,9 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import com.kiralycraft.fcsv.torrentinterfaces.AvailableClients;
+import com.kiralycraft.fcsv.torrentinterfaces.GenericClientInterface;
+import com.kiralycraft.fcsv.torrentinterfaces.RUTorrentInterface;
 import com.kiralycraft.fcsv.torrentinterfaces.TransmissionInterface;
 
 public class Main 
@@ -97,6 +100,17 @@ public class Main
 		String downloadFolder = saveman.getKey("downloadFolder");
 		String softQuotaBytesString = saveman.getKey("softQuotaBytes");
 		
+		AvailableClients client;
+		try
+		{
+			client = AvailableClients.valueOf(saveman.getKey("chosenClient"));
+		}
+		catch(Exception e)
+		{
+			Logger.log("Whoops! Nu ai specificat tipul clientului de torrente, sau nu este unul valid. Te rugam sa reconfigurezi aplicatia.");
+			return;
+		}
+		
 		long softQuotaBytes = -1;
 		if (!softQuotaBytesString.equals("null"))
 		{
@@ -107,8 +121,18 @@ public class Main
 		Logger.log("You can type \"help\" to see various commands.");
 		
 //		Connection connection = new Connection(transmissionuser,transmissionpassword,transmissionip);
-		TransmissionInterface ti = new TransmissionInterface(transmissionuser,transmissionpassword,transmissionip);
-		RunThread runThread = new RunThread(Boolean.parseBoolean(usernamepassword),filelistusername,filelistpassword,cfduid,phpsessionid,pass,uid,fl,downloadFolder,freelechOnly,seedLeechRatio,saveman,ti,softQuotaBytes);
+		GenericClientInterface gci = null; 
+		if (client.equals(AvailableClients.Transmission))
+		{
+			gci = new TransmissionInterface(transmissionuser,transmissionpassword,transmissionip);
+		}
+		else if (client.equals(AvailableClients.ruTorrent))
+		{
+			gci = new RUTorrentInterface(transmissionuser,transmissionpassword,transmissionip);
+		}
+		
+		
+		RunThread runThread = new RunThread(Boolean.parseBoolean(usernamepassword),filelistusername,filelistpassword,cfduid,phpsessionid,pass,uid,fl,downloadFolder,freelechOnly,seedLeechRatio,saveman,gci,softQuotaBytes);
 		runThread.start();
 		
 		Scanner scan = new Scanner(System.in);
@@ -126,16 +150,28 @@ public class Main
 		Scanner scan = new Scanner(System.in);
 		Logger.log("Bine ai venit, vom face cativa pasi pentru a configura aceasta aplicatie. Introdu ce ti se cere, apoi apasa ENTER.");
 		Logger.log("");
-		Logger.log("Prima data vom avea nevoie de adresa IP a serverului de Transmission. Ex: http://a.com:6882.");
+		Logger.log("Prima data vom avea nevoie de adresa IP a clientului de torrente. Ex: http://a.com:6882.");
 		Logger.log("Daca e server local, foloseste http://localhost:<port>");
 		String ip = scan.nextLine();
-		Logger.log("Introdu username-ul cu care te loghezi pe serverul de Transmission.");
+		Logger.log("Introdu username-ul cu care te loghezi pe serverul de clientul de torrente.");
 		String userStr = scan.nextLine();
 		Logger.log("Oblig utilizatorii sa isi puna username si parola pentru a spori securitatea.");
 		Console console = System.console();
-		Logger.log("Acum introdu parola serverului de Transmission (nu va aparea pe ecran din motive de securitate)");
+		Logger.log("Acum introdu parola clientului de torrente (nu va aparea pe ecran din motive de securitate)");
 		
 		String passwordStr = readPassowrd(console,scan);
+		
+		Logger.log("Ce tip de client este?");
+		Logger.log("Pana acum aplicatia suporta:");
+		int indx = 1;
+		for (AvailableClients s:AvailableClients.values())
+		{
+			Logger.log(" ("+indx+") "+s);
+			indx++;
+		}
+		String clientType = scan.nextLine();
+		AvailableClients chosen = AvailableClients.values()[Integer.parseInt(clientType)-1];
+		saveman.setKey("chosenClient", chosen.toString());
 		
 		Logger.log("Doresti sa te loghezi pe Filelist.ro cu username si parola, sau cookies din browser? <U/c>");
 		String choice = scan.nextLine();
@@ -194,7 +230,7 @@ public class Main
 		Logger.log("Te rugam sa introduci calea completa a folderului unde se vor descarca fisierele .torrent . Nu lasa acest camp gol!");
 		String downloadFolder = scan.nextLine();
 		
-		Logger.log("Doersti sa activezi soft quota? Aceasta optiune limiteaza spatiul folosit de catre Transmission. Daca da, te rugam sa introduci dimensiunea in MB");
+		Logger.log("Doersti sa activezi soft quota? Aceasta optiune limiteaza spatiul folosit de catre clientul de torrente. Daca da, te rugam sa introduci dimensiunea in MB");
 		String softQuotaBytes = scan.nextLine();
 		if (softQuotaBytes.length()>0)
 		{
@@ -205,6 +241,7 @@ public class Main
 			saveman.setKey("softQuotaBytes", "null");
 		}
 		
+	
 		saveman.setKey("init", "true");
 		saveman.setKey("transmissionip", ip);
 		saveman.setKey("transmissionuser", userStr);

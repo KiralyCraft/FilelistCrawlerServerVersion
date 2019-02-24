@@ -760,58 +760,58 @@ public class Connection
 		}
 		return null;
 	}
-	public float getDownloadSpeed()
-	{
-		try 
-		{
-			byte[] postData       = "{\"method\":\"session-stats\"}".getBytes( StandardCharsets.UTF_8 );
-			int    postDataLength = postData.length;
-			String request = url;
-			URL url = new URL(request);
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setDoOutput(true);
-			conn.setInstanceFollowRedirects(false);
-			conn.setRequestMethod("POST");
-
-			conn.setRequestProperty("Authorization", loginString);
-			conn.setRequestProperty("X-Transmission-Session-Id", authKey);
-			conn.setRequestProperty( "Content-Length", Integer.toString( postDataLength ));
-			conn.connect();
-			try( DataOutputStream wr = new DataOutputStream( conn.getOutputStream())) 
-			{
-			   wr.write( postData );
-			}
-			
-			int response = conn.getResponseCode();
-			if (response == 200)
-			{
-				String authKey = conn.getHeaderField("X-Transmission-Session-Id");
-				if (authKey!=null)
-				{
-					this.authKey = authKey;
-				}
-				
-				BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-				String inputLine;
-				String responseString = "";
-
-				while ((inputLine = in.readLine()) != null) 
-				{
-					responseString+=inputLine;
-				}
-				in.close();
+//	public float getDownloadSpeed()
+//	{
+//		try 
+//		{
+//			byte[] postData       = "{\"method\":\"session-stats\"}".getBytes( StandardCharsets.UTF_8 );
+//			int    postDataLength = postData.length;
+//			String request = url;
+//			URL url = new URL(request);
+//			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+//			conn.setDoOutput(true);
+//			conn.setInstanceFollowRedirects(false);
+//			conn.setRequestMethod("POST");
+//
+//			conn.setRequestProperty("Authorization", loginString);
+//			conn.setRequestProperty("X-Transmission-Session-Id", authKey);
+//			conn.setRequestProperty( "Content-Length", Integer.toString( postDataLength ));
+//			conn.connect();
+//			try( DataOutputStream wr = new DataOutputStream( conn.getOutputStream())) 
+//			{
+//			   wr.write( postData );
+//			}
+//			
+//			int response = conn.getResponseCode();
+//			if (response == 200)
+//			{
+//				String authKey = conn.getHeaderField("X-Transmission-Session-Id");
+//				if (authKey!=null)
+//				{
+//					this.authKey = authKey;
+//				}
 //				
-				JsonParser parser = new JsonParser();
-				JsonObject o = parser.parse(responseString).getAsJsonObject().getAsJsonObject("arguments");
-				JsonPrimitive space = o.getAsJsonPrimitive("downloadSpeed");
-				return space.getAsLong()/1024f/1024f;
-			}
-			return -1;
-		} catch (Exception e) 
-		{
-			return -2;
-		}
-	}
+//				BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+//				String inputLine;
+//				String responseString = "";
+//
+//				while ((inputLine = in.readLine()) != null) 
+//				{
+//					responseString+=inputLine;
+//				}
+//				in.close();
+////				
+//				JsonParser parser = new JsonParser();
+//				JsonObject o = parser.parse(responseString).getAsJsonObject().getAsJsonObject("arguments");
+//				JsonPrimitive space = o.getAsJsonPrimitive("downloadSpeed");
+//				return space.getAsLong()/1024f/1024f;
+//			}
+//			return -1;
+//		} catch (Exception e) 
+//		{
+//			return -2;
+//		}
+//	}
 	public boolean isLocalInstance() {
 		return isLocalInstance;
 	}

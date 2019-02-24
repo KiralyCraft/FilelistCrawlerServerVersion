@@ -115,11 +115,11 @@ public class RunThread extends Thread implements Runnable
 	public void run()
 	{
 		Logger.log("Starting in progress");
-		Logger.log("Connecting to Transmission ...");
+		Logger.log("Connecting to The Torrent Client ...");
 		int loginResult = connection.login();
 		if (loginResult == 1)
 		{
-			Logger.log("Connection to Transmission successfull");
+			Logger.log("Connection to The Torrent Client successfull");
 			if (loginwithusername)
 			{
 				Logger.log("Logging into Filelist.ro with username and password");
@@ -162,7 +162,7 @@ public class RunThread extends Thread implements Runnable
 					Logger.log("Analyzing results ...");
 					Pair<Integer,Integer> torrentCount = parseTorrentData();
 					Logger.log("Analysis complete. Torrents that meet the requirements: "+torrentCount.getKey()+" out of "+torrentCount.getValue());
-					Logger.log("Now uploading to Transmission ...");
+					Logger.log("Now uploading to The Torrent Client ...");
 					uploadPendingTorrents();
 					
 					saveman.setKey("cfduid", cfduid+"");
@@ -190,14 +190,14 @@ public class RunThread extends Thread implements Runnable
 						float tmpUploadSpeed = connection.getUploadSpeed();
 						if (tmpUploadSpeed == -1)
 						{
-							Logger.log("Transmission kicked us. Let's re-login!");
+							Logger.log("The Torrent Client kicked us. Let's re-login!");
 							if (connection.login() == 1)
 							{
 								Logger.log("OK");
 							}
 							else
 							{
-								Logger.log("Something failed terribly wrong. Transmission will not accept us!");
+								Logger.log("Something failed terribly wrong. The Torrent Client will not accept us!");
 							}
 						}
 						uploadSpeedAvg+=tmpUploadSpeed;
@@ -242,15 +242,15 @@ public class RunThread extends Thread implements Runnable
 		}
 		else if (loginResult == 2)
 		{
-			Logger.log("Invalid Transmission username or password. Authentication failed.");
+			Logger.log("Invalid The Torrent Client username or password. Authentication failed.");
 		}
 		else if (loginResult == 3)
 		{
-			Logger.log("Invalid JSON cand trimiteam spre Transmission");
+			Logger.log("Invalid JSON cand trimiteam spre The Torrent Client");
 		}
 		else if (loginResult == -1)
 		{
-			Logger.log("Conectarea la Transmission a rezultat intr-o eroare necunoscuta/nedocumentata.");
+			Logger.log("Conectarea la The Torrent Client a rezultat intr-o eroare necunoscuta/nedocumentata.");
 		}
 	}
 	
@@ -273,22 +273,22 @@ public class RunThread extends Thread implements Runnable
 	}
 	private void uploadPendingTorrents() 
 	{
-		Logger.log("Asking Transmission where to store the torrent");
+		Logger.log("Asking The Torrent Client where to store the torrent");
 		String downLocation = this.connection.getFreeSpaceAndDownDir().getValue();
 		if (downLocation.length()==0)
 		{
-			Logger.log("Transmission gave us fucked up download location!");
+			Logger.log("The Torrent Client gave us fucked up download location!");
 		}
 		else
 		{
-			Logger.log("Transmission replied with: \""+downLocation+"\"");
+			Logger.log("The Torrent Client replied with: \""+downLocation+"\"");
 			int counter = 0;
 			for (String s:torrentsPendingDownload)
 			{
 				File torrent = new File(s);
 				if (torrent.exists() && torrent.isFile())
 				{
-					Logger.log("Uploading \""+torrent.getName()+"\" to Transmission...");
+					Logger.log("Uploading \""+torrent.getName()+"\" to The Torrent Client...");
 					boolean okay = this.connection.uploadNewTorrent(downLocation, torrent);
 					if (okay==false)
 					{
@@ -554,31 +554,31 @@ public class RunThread extends Thread implements Runnable
 		if (softQuotaBytes!=-1)
 		{
 			Logger.log("SOFT QUOTA IS ACTIVATED: "+softQuotaBytes/1000/1000+" MB");
-			Logger.log("Asking Transmission how much current torrents take.");
+			Logger.log("Asking The Torrent Client how much current torrents take.");
 			currentUsedSpace = connection.getUsedSpace();
 			Logger.log("Got response: "+currentUsedSpace+" bytes = "+currentUsedSpace/1000/1000+" MB");
 		}
 		
-		Logger.log("Asking Transmission how much free space there is.");
+		Logger.log("Asking The Torrent Client how much free space there is.");
 		long freeSpaceOnTransmission = connection.getFreeSpaceAndDownDir().getKey();
 				
 		if (freeSpaceOnTransmission == -1)
 		{
-			Logger.log("Transmission returned wrong response code while asking for free space!");
+			Logger.log("The Torrent Client returned wrong response code while asking for free space!");
 		}
 		else if (freeSpaceOnTransmission == -2)
 		{
-			Logger.log("Transmission got an error asking for free space. Oh shit.");
+			Logger.log("The Torrent Client got an error asking for free space. Oh shit.");
 		}
 		else
 		{
 			Logger.log("Got response: "+freeSpaceOnTransmission+" bytes = "+freeSpaceOnTransmission/1000/1000+" MB");
 			
-			Logger.log("Asking Transmission how much free is required for current downloading torrents.");
+			Logger.log("Asking The Torrent Client how much free is required for current downloading torrents.");
             long freeSpaceForDownloadingTorrents = connection.getDownloadingTorrentsSpaceNeeded();     
             if (freeSpaceForDownloadingTorrents == -1) 
             {
-                Logger.log("Transmission returned wrong response code while asking for required space for downloading torrents!");
+                Logger.log("The Torrent Client returned wrong response code while asking for required space for downloading torrents!");
             }
             else 
             {
@@ -623,7 +623,7 @@ public class RunThread extends Thread implements Runnable
                                 	Logger.log("With this torrent, out total used space would be: "+(totalSize+td.downloadSize+currentUsedSpace/1000d/1000d/1000d)+" GB.");
                                 }
 								Logger.log("Not enough space to download "+td.torrentName+". It requires "+td.downloadSize+" GB");
-								Logger.log("Will ask Transmission to do a cleanup.");
+								Logger.log("Will ask The Torrent Client to do a cleanup.");
 								if (retryCount>maxRetry)
 								{
 									retryCount = 0;
@@ -636,19 +636,19 @@ public class RunThread extends Thread implements Runnable
 									{
 										Logger.log("Cleanup successful! Will try to download this torrent again.");
 										
-										Logger.log("Sleeping for 10 seconds to allow Transmission to update it's stats about free space");
+										Logger.log("Sleeping for 10 seconds to allow The Torrent Client to update it's stats about free space");
 										Utils.sleep(10000);
 										
-										Logger.log("Asking Transmission again how much free space there is.");
+										Logger.log("Asking The Torrent Client again how much free space there is.");
 										freeSpaceOnTransmission = connection.getFreeSpaceAndDownDir().getKey();
 										Logger.log("Got response: "+freeSpaceOnTransmission+" bytes = "+freeSpaceOnTransmission/1000/1000+" MB");
 										
-										Logger.log("Asking Transmission again  how much free is required for current downloading torrents.");
+										Logger.log("Asking The Torrent Client again  how much free is required for current downloading torrents.");
                                         freeSpaceForDownloadingTorrents = connection.getDownloadingTorrentsSpaceNeeded();
                                         Logger.log("Got response: "+freeSpaceForDownloadingTorrents+" bytes = "+freeSpaceForDownloadingTorrents/1000/1000+" MB");
                                         Logger.log("Available space is : "+(freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)+" bytes = "+(freeSpaceOnTransmission-freeSpaceForDownloadingTorrents)/1000/1000+" MB");
                                         
-                                        Logger.log("Asking Transmission how much current torrents take.");
+                                        Logger.log("Asking The Torrent Client how much current torrents take.");
                             			currentUsedSpace = connection.getUsedSpace();
                             			Logger.log("Got response: "+currentUsedSpace+" bytes = "+currentUsedSpace/1000/1000+" MB");
                                         
@@ -659,7 +659,7 @@ public class RunThread extends Thread implements Runnable
 									}
 									else
 									{
-										Logger.log("Transmission failed to clean up enough space for this torrent, so we're skipping it.");
+										Logger.log("The Torrent Client failed to clean up enough space for this torrent, so we're skipping it.");
 									}
 								}
 							}
