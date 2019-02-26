@@ -451,10 +451,18 @@ public class Connection
 						JsonArray info = s.getValue().getAsJsonArray();
 						
 						float ratio = info.get(11-1).getAsFloat()/1000f;
-						long timeAddedSeconds = System.currentTimeMillis()/1000l - Long.parseLong(info.get(35-1).getAsString().replaceAll("[^\\d]", ""));
 						long uploadedEver = info.get(10-1).getAsLong();
 						long size = info.get(6-1).getAsLong();
 						String name = info.get(5-1).getAsString();
+						long timeAddedSeconds;
+						try
+						{
+							timeAddedSeconds = System.currentTimeMillis()/1000l - Long.parseLong(info.get(35-1).getAsString().replaceAll("[^\\d]", ""));
+						}
+						catch(NumberFormatException puscatura)
+						{
+							timeAddedSeconds = 0; //daca nu este coloana (am patit) presupunem ca s-a adaugat in momentul verificarii. astfel, numai ratia conteaza, nu si 48h
+						}
 						long haveValid = info.get(9-1).getAsLong();
 						float upspeed = info.get(12-1).getAsFloat();
 						long bytesLeft = info.get(20-1).getAsLong();
