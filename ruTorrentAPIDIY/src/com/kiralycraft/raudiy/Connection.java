@@ -394,6 +394,7 @@ public class Connection
 				while(this.getFreeSpaceAndDownDir().getKey()==spaceNow)
 				{
 					System.out.println("#"+checkcount+" Is it gone? Not yet.");
+					checkcount++;
 					Thread.sleep(5000);
 				}
 				System.out.println("#"+checkcount+" Is it gone? Yup!");
