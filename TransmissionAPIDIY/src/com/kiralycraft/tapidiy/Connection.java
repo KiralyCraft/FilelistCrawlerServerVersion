@@ -28,7 +28,6 @@ public class Connection
 	
 	private JsonObject torrentInfo = null;
 	
-	boolean isLocalInstance;
 	
 	class TorrentInfo
 	{
@@ -86,30 +85,7 @@ public class Connection
 		url+="/transmission/rpc";
 		this.url = url;
 		loginString = "Basic "+new String(encodedBytes);
-		
-		isLocalInstance = url.contains("localhost") || url.contains("127.0.0.1");
-		if (isLocalInstance)
-		{
-			System.out.println();
-			System.out.println();
-			System.out.println("===WARNING===");
-			System.out.println("Based on the Transmission URL, this is a LOCAL INSTANCE and files will be deleted accordingly.");
-			System.out.println("Please DO NOT \"localhost\" or \"127.0.0.1\" if this application is NOT RUNNING on the same machine as your Transmission instance.");
-			System.out.println("=============");
-			System.out.println();
-			System.out.println();
-		}
-		else
-		{
-			System.out.println();
-			System.out.println();
-			System.out.println("===WARNING===");
-			System.out.println("Based on the Transmission URL, this is an REMOTE INSTANCE and files will be deleted accordingly.");
-			System.out.println("Please use \"localhost\" or \"127.0.0.1\" if this application is running on the same machine as your Transmission instance.");
-			System.out.println("=============");
-			System.out.println();
-			System.out.println();
-		}
+
 	}
 	public int login()  
 	{
@@ -231,8 +207,9 @@ public class Connection
             
 			for (JsonElement obj:allTorrents) 
 			{
+				boolean unregistered = obj.getAsJsonObject().has("errorString") && obj.getAsJsonObject().get("errorString").getAsString().contains("Unregistered torrent");
 				float percentDone = obj.getAsJsonObject().getAsJsonPrimitive("percentDone").getAsFloat();
-				if (percentDone==1f)//nu includem torerntele care nu-s gata
+				if (percentDone==1f || unregistered)//nu includem torerntele care nu-s gata
 				{
 		            int id = obj.getAsJsonObject().getAsJsonPrimitive("id").getAsInt();
 		            float ratio = obj.getAsJsonObject().getAsJsonPrimitive("uploadRatio").getAsFloat();
@@ -253,7 +230,7 @@ public class Connection
 			            TorrentInfo ti = new TorrentInfo(id,ratio,lastActivitySeconds,timeAddedSeconds,uploadEver,size,haveValid,name);
 			            
 			            tilist.add(ti); //doar daca indeplineste conditiile pentru a fi sters
-			            if ((ti.getUploadRatio()>1.0f || ti.getTimeAddedSeconds()>172800)) //daca are 48 de ore sau nu o mai facut upload de o zi
+			            if ((ti.getUploadRatio()>1.0f || ti.getTimeAddedSeconds()>172800) || unregistered) //daca are 48 de ore sau nu o mai facut upload de o zi
 			            {
 //			            	System.out.println(ratio);
 //				            System.out.println(id+" "+ratio+" "+uploadEver+" "+size+" "+timeAddedSeconds+" "+lastActivitySeconds+" "+name);
@@ -305,71 +282,28 @@ public class Connection
 			{
 				for (TorrentInfo tmpti:toRemove)
 				{
-					if (isLocalInstance)
+
+					System.out.println("Removing torrent instance from Transmission ( with associated files, remotely): "+tmpti.getName());
+					removeTorrent(tmpti.getId());
+					System.out.println("Torrent removed. Waiting up to 60 seconds to make sure it's gone.");
+					boolean gone = false;
+					for (int i=0;i<60;i++)
 					{
-						System.out.println("Getting associated files for:"+tmpti.getName());
-						JsonArray files = getTorrentFiles(tmpti.getId());
-						
-						System.out.println("Removing torrent instance from Transmission");
-						removeTorrent(tmpti.getId(),isLocalInstance);
-						
-						System.out.println("Removing associated files for:"+tmpti.getName());
-						
-						for (JsonElement je:files)
+						System.out.println("Checking. Is it gone?");
+						if (isTorrentStillPresent(tmpti.getName()))
 						{
-							String toDeletePath = je.getAsJsonObject().getAsJsonPrimitive("name").getAsString();
-							File fileToDelete = new File(downloadDir+File.separator+toDeletePath);
-							System.out.println("Expecting file at: \""+fileToDelete.getAbsolutePath()+"\". Does it exist? "+fileToDelete.exists()+".");
-							System.out.println("Erasing "+toDeletePath);
-							
-							for (int i=0;i<=10;i++)
-							{
-								if (i==10)
-								{
-									System.out.println("Failed to delete after 10 tries! Aborting ...");
-									return false;
-								}
-								if (!fileToDelete.delete())
-								{
-									System.out.println("Failed to delete! Will retry in 1 second. Retry #"+i);
-									try
-									{
-										Thread.sleep(1000);
-									} 
-									catch (InterruptedException e)
-									{
-										;
-									}
-									
-								}
-							}
+							System.out.println("Still there. Waiting one second. Will try for another "+(60-i-1)+" seconds.");
+						}
+						else
+						{
+							System.out.println("Yay! It's gone.");
+							gone = true;
+							break;
 						}
 					}
-					else
+					if (!gone)
 					{
-						System.out.println("Removing torrent instance from Transmission ( with associated files, remotely): "+tmpti.getName());
-						removeTorrent(tmpti.getId(),isLocalInstance);
-						System.out.println("Torrent removed. Waiting up to 60 seconds to make sure it's gone.");
-						boolean gone = false;
-						for (int i=0;i<60;i++)
-						{
-							System.out.println("Checking. Is it gone?");
-							if (isTorrentStillPresent(tmpti.getName()))
-							{
-								System.out.println("Still there. Waiting one second. Will try for another "+(60-i-1)+" seconds.");
-							}
-							else
-							{
-								System.out.println("Yay! It's gone.");
-								gone = true;
-								break;
-							}
-						}
-						if (!gone)
-						{
-							System.out.println("It doesn't want to go away! This routine is done now. Not this function's problem anymore.");
-						}
-						
+						System.out.println("It doesn't want to go away! This routine is done now. Not this function's problem anymore.");
 					}
 				}
 				return true;
@@ -380,11 +314,11 @@ public class Connection
 			}
 		}
 	}
-	public boolean removeTorrent(int id, boolean localInstance)
+	public boolean removeTorrent(int id)
 	{
 		try
 		{
-			byte[] postData       = ("{\"method\": \"torrent-remove\",\"arguments\": {\"delete-local-data\": "+(!localInstance)+",\"ids\": ["+id+"]}}").getBytes( StandardCharsets.UTF_8 );
+			byte[] postData       = ("{\"method\": \"torrent-remove\",\"arguments\": {\"delete-local-data\": "+true+",\"ids\": ["+id+"]}}").getBytes( StandardCharsets.UTF_8 );
 			int    postDataLength = postData.length;
 			String request = url;
 			URL url = new URL(request);
@@ -759,61 +693,6 @@ public class Connection
 			e.printStackTrace();
 		}
 		return null;
-	}
-//	public float getDownloadSpeed()
-//	{
-//		try 
-//		{
-//			byte[] postData       = "{\"method\":\"session-stats\"}".getBytes( StandardCharsets.UTF_8 );
-//			int    postDataLength = postData.length;
-//			String request = url;
-//			URL url = new URL(request);
-//			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-//			conn.setDoOutput(true);
-//			conn.setInstanceFollowRedirects(false);
-//			conn.setRequestMethod("POST");
-//
-//			conn.setRequestProperty("Authorization", loginString);
-//			conn.setRequestProperty("X-Transmission-Session-Id", authKey);
-//			conn.setRequestProperty( "Content-Length", Integer.toString( postDataLength ));
-//			conn.connect();
-//			try( DataOutputStream wr = new DataOutputStream( conn.getOutputStream())) 
-//			{
-//			   wr.write( postData );
-//			}
-//			
-//			int response = conn.getResponseCode();
-//			if (response == 200)
-//			{
-//				String authKey = conn.getHeaderField("X-Transmission-Session-Id");
-//				if (authKey!=null)
-//				{
-//					this.authKey = authKey;
-//				}
-//				
-//				BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-//				String inputLine;
-//				String responseString = "";
-//
-//				while ((inputLine = in.readLine()) != null) 
-//				{
-//					responseString+=inputLine;
-//				}
-//				in.close();
-////				
-//				JsonParser parser = new JsonParser();
-//				JsonObject o = parser.parse(responseString).getAsJsonObject().getAsJsonObject("arguments");
-//				JsonPrimitive space = o.getAsJsonPrimitive("downloadSpeed");
-//				return space.getAsLong()/1024f/1024f;
-//			}
-//			return -1;
-//		} catch (Exception e) 
-//		{
-//			return -2;
-//		}
-//	}
-	public boolean isLocalInstance() {
-		return isLocalInstance;
 	}
 	public long getUsedSpace()
 	{

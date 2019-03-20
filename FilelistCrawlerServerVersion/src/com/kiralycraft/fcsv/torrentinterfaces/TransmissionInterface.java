@@ -39,7 +39,7 @@ public class TransmissionInterface implements GenericClientInterface
 	@Override
 	public boolean isLocalInstance()
 	{
-		return connection.isLocalInstance();
+		return false;
 	}
 
 	@Override
