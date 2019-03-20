@@ -35,7 +35,7 @@ public class Connection
 		private long bytesLeft;
 		private String name;
 		boolean shouldBeProcessed;
-		
+		boolean unregistered;
 		public TorrentInfo(String hashID,long bytesLeft,float uploadSpeed, float uploadRatio, long lastActivitySeconds, long timeAddedSeconds,long uploadedEver, long size,long haveValid, String name) 
 		{
 			this.hashID = hashID;
@@ -94,6 +94,14 @@ public class Connection
 		public TorrentInfo deepCopy()
 		{
 			return new TorrentInfo(hashID,bytesLeft,uploadSpeed, uploadRatio, lastActivitySeconds, timeAddedSeconds,uploadedEver, size,haveValid, name);
+		}
+		public void setUnregistered(boolean b)
+		{
+			this.unregistered = b;
+		}
+		public boolean isUnregistered()
+		{
+			return unregistered;
 		}
 	}
 	
@@ -213,9 +221,10 @@ public class Connection
 				{
 		            if (!obj.getName().contains("NODELETE"))
 		            {   
-			            if ((obj.getUploadRatio()>1.0f || obj.getTimeAddedSeconds()>172800)) //daca are 48 de ore sau nu o mai facut upload de o zi
+			            if ((obj.getUploadRatio()>1.0f || obj.getTimeAddedSeconds()>172800) || obj.isUnregistered()) //daca are 48 de ore sau nu o mai facut upload de o zi
 			            {
 			            	TorrentInfo toRemove = obj.deepCopy();
+			            	toRemove.setUnregistered(obj.isUnregistered());
 				            tilist.add(toRemove); //doar daca indeplineste conditiile pentru a fi sters
 				            toRemove.shouldBeProcessed=true;
 			            	System.out.println("Should be removed: "+toRemove.getName());
@@ -455,6 +464,8 @@ public class Connection
 						long uploadedEver = info.get(10-1).getAsLong();
 						long size = info.get(6-1).getAsLong();
 						String name = info.get(5-1).getAsString();
+						boolean unregsitered = info.get(30-1).getAsString().contains("Unregistered torrent");
+						
 						long timeAddedSeconds;
 						try
 						{
@@ -468,6 +479,10 @@ public class Connection
 						float upspeed = info.get(12-1).getAsFloat();
 						long bytesLeft = info.get(20-1).getAsLong();
 						TorrentInfo ti = new TorrentInfo(s.getKey(),bytesLeft,upspeed,ratio,-1,timeAddedSeconds,uploadedEver,size,haveValid,name);
+						if (unregsitered)
+						{
+							ti.setUnregistered(true);
+						}
 						torrentInfoCache.add(ti);
 					}
 //					System.out.println(torrentList);
