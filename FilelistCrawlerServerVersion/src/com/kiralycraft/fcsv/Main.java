@@ -230,7 +230,7 @@ public class Main
 		Logger.log("Te rugam sa introduci calea completa a folderului unde se vor descarca fisierele .torrent . Nu lasa acest camp gol!");
 		String downloadFolder = scan.nextLine();
 		
-		Logger.log("Doersti sa activezi soft quota? Aceasta optiune limiteaza spatiul folosit de catre clientul de torrente. Daca da, te rugam sa introduci dimensiunea in MB");
+		Logger.log("Doresti sa activezi soft quota? Aceasta optiune limiteaza spatiul folosit de catre clientul de torrente. Daca da, te rugam sa introduci dimensiunea in MB");
 		String softQuotaBytes = scan.nextLine();
 		if (softQuotaBytes.length()>0)
 		{
